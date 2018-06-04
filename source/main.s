@@ -28,9 +28,8 @@ main:
 	ldr	r0, =frameBufferInfo
 	bl	initFbInfo
 	
-
-	@ call print background to test functionality of linking
-	bl	printBackground
+	bl	testBackgrounds
+	
 
 
 end:
@@ -42,24 +41,34 @@ end:
 @ eventually move to seperate file
 /*---------------------- FUNCTIONS --------------------*/
 
-/*****************************************************
- * Purpose: To print the main background image.
+
+
+/******************************************************
+ * Purpose: To test printing all of the screens
+ * will eventually make the print a general function
  *
  *
- *
- *
- *****************************************************/
-printBackground:
+ ******************************************************/
+testBackgrounds:
 	push	{lr}
 
-	bl	getCoord		@ get coordinate of the center + offset for pixels
-	bl	printImage		@ return value is the params for next
-		
-	pop 	{lr}
+	@ call print background to test functionality of linking
+/*	
+	bl	printSplashStart
+	
+	ldr	r0, =0x00008000
+	bl	delayMicroseconds	@ delay so that I can see image
+	bl	printSplashQuit
+*/
+	ldr	r0, =0x00008000
+	bl	delayMicroseconds	@ delay so that I can see image
+	bl	getCoord
+	bl	printBackground
+
+	@ add clear screen function
+	
+	pop	{lr}
 	bx	lr
-
-
-
 
 .end
 

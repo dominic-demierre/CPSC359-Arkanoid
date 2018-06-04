@@ -1,29 +1,11 @@
-/*********************************
+/******************************************
  * Practice writing pixels
  *
  *
- *********************************/
+ ******************************************/
 
 .sect	.text
-.global	main
 
-/*
-main:
-	buffer	.req	r4
-	xCenter	.req	r5
-	ycenter .req	r6
-
-	ldr	r0, =frameBufferInfo
-	bl	initFbInfo
-	
-	bl	getCoord
-	@ return value is the params for next
-	bl	printImage
-
-
-end:
-	bl	exit
-*/
 /******************************************
  *
  * r0 - x
@@ -56,9 +38,13 @@ DrawPixel:
  * Purpose: to print an image
  * r0 - x
  * r1 - y
+ *
+ * find way to make this a general function
+ * for printing any background
+ *
  ******************************************/
-.global printImage
-printImage:
+.global printBackground
+printBackground:
 	push	{r4, r5, r6, r7, r8, r9, r10, lr}
 	
 	sAddr	.req	r10
