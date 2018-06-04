@@ -38,13 +38,13 @@ DrawPixel:
  * Purpose: to print an image
  * r0 - x
  * r1 - y
- *
+ * r2 - the address to read in
  * find way to make this a general function
  * for printing any background
  *
  ******************************************/
-.global printBackground
-printBackground:
+.global printBacking
+printBacking:
 	push	{r4, r5, r6, r7, r8, r9, r10, lr}
 	
 	sAddr	.req	r10
@@ -56,7 +56,12 @@ printBackground:
 	temp	.req	r3
 	offset	.req	r4
 
-	ldr	sAddr, =gameBackground
+	mov	sAddr, r2		@ r2 has the address of the image to print, save in sAddr
+
+	mov	r3, r2			@ move the image address into r3 to get coordinates
+	bl	getCoord
+	@ return is in r0 - x, r1 - y
+	
 	add	colour, sAddr, #8 	@ address of first ascii
 	mov	x, r0	@ store x
 	mov	y, r1	@ store y
@@ -112,6 +117,7 @@ done:
  * based on the size of the screen
  * r0 - x
  * r1 - y
+ * r3 - the address of the image
  * return: r0 - x, r1 - y
  ******************************************/
 .global getCoord
@@ -122,7 +128,7 @@ getCoord:
 	ldr	r1, [r0, #4]			@ width
 	ldr	r2, [r0, #8]			@ height
 	@ load picture dimensions
-	ldr	r3, =gameBackground
+	@ r3 has the image address
 	ldr	r4, [r3]			@ picture width
 	ldr	r5, [r3, #4]
 	

@@ -53,17 +53,23 @@ testBackgrounds:
 	push	{lr}
 
 	@ call print background to test functionality of linking
-/*	
-	bl	printSplashStart
 	
-	ldr	r0, =0x00008000
+	
+	ldr	r2, =splashStart
+	bl	printBacking
+	
+	ldr	r0, =0x000FFFFF
 	bl	delayMicroseconds	@ delay so that I can see image
-	bl	printSplashQuit
-*/
-	ldr	r0, =0x00008000
+
+	ldr	r2, =splashQuit
+	bl	printBacking
+
+	ldr	r0, =0x000FFFFF
 	bl	delayMicroseconds	@ delay so that I can see image
-	bl	getCoord
-	bl	printBackground
+
+	@ to print the backing to the screen, you only need to pass the image address 
+	ldr	r2, =gameBackground	@ pass the address for image to print
+	bl	printBacking
 
 	@ add clear screen function
 	
