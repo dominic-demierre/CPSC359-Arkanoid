@@ -32,6 +32,8 @@ clearBoard:
 	.int	768		@ width of the clear screen
 	.int	896		@ height of the clear screen
 
+resetPositions:
+	.int	0, 368		@ starting positions for paddle and ball (x,y of paddle; x, y of ball)
 
 
 /*----------------------- CODE ----------------------*/
@@ -132,26 +134,72 @@ testPaddle:
 	
 inputLoop:
 	bl	Read_SNES			@ get the input from the SNES paddle
-	mov	r1, #0xFFF7			@ move test mask to see if start was pressed
-	teq	r0, r1				@ test to see if user pressed start
+	
+	@ start button
+	
+	mvn	r0, r0				@ get the compliment of r0
+	mov	r1, #0x8			@ for seeing if start was pressed
+	and	r1, r1, r0			@ extract the bit for start
+	lsr	r1, #3				@ shift the bit for testing if on for start
+	teq	r1, #1				@ see if bit is turned on
+	beq	resetGame			@ if start was pressed proceed
+	
+	@select button
+	
+	mvn	r0, r0				@ get the compliment of r0
+	mov	r1, #0x4			@ for seeing if select was pressed
+	and	r1, r1, r0			@ extract the bit for select
+	lsr	r1, #2				@ shift the bit for testing if on for select
+	teq	r1, #1				@ see if bit is turned on
+	beq	mainMenu			@ if select was pressed proceed
+	
+	@ if start was pressed, go to label resetPositions, write values in label into the paddle and ball labels to reset
+	@ if select was pressed, branch to the main menu label (also reset values in paddle and ball)
+
 	beq	endTestPaddle	
 
-	@ for test
-	@ldr	r0, [r10]
-	@sub	r0, #4
-	@str	r0, [r10]
-
+	@ loop of updates and drawing functions 
 	bl	updatePaddle
 	mov	r2, r4
 	bl	printBacking
 	bl	drawPaddle
 	b	inputLoop
 	
+
 endTestPaddle:	
 	pop	{r4-r6, r10, lr}
 	bx	lr
 
+resetGame:
+	push	{r4-r5, lr}
+	
+	// reset the paddle:
+	
+	ldr	r4, =paddlePosition
+	mov	r5, #0
+	str	r5, [r4]
+	mov	r5, #346
+	str	r5, [r4, #4]
+	
+	// reset the ball:
+	
+	ldr	r4, =ballPosition
+	mov	r5, #200
+	str	r5, [r4]
+	mov	r5, #200
+	str	r5, [r4, #4]
+	mov	r5, #0
+	str	r5, [r4, #8]
+	mov	r5, #2
+	str	r5, [r4, #12]
+	mov	r5, #0
+	str	r5, [r4, #16]
+	
+	b	gameLoop
+	
+	pop	{r4-r5, pc}
 
+	
 
 .end
 
