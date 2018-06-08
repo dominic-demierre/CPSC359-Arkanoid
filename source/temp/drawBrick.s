@@ -25,7 +25,6 @@
 
 
 drawBrick:
-	//variables, should I leave r0-r3 open for parameters? Do I need parameters?
 
 	push	{r4-r9, lr}
 
@@ -37,32 +36,51 @@ drawBrick:
 	hitFlag	.req	r9
 
 
-	ldr	yCoord, [//base address where bricks start, +32 when we move up the game screen]
-	ldr	xCoord, [//base address where bricks start, +/-64 as we print each row of bricks the x value goes from 0 to max over and over]
-
-	//determining colour; maybe first 2 rows are blue, next 2 are purple, last 2 are grey.
-	//so then colour is dependant on the yCoord
-	if yCoord >= base addr for bricks and yCoord <= base+32:
-		//ldr	colour, [//hex for blue; find later]
-	if yCoord >= base+64 and yCoord <= base+96:
-		//ldr	colour, [//hex for purple; find later]
-	if yCoord > base+96:
-		//ldr	colour, [//hex for dark grey; find later]
-
-	
-	//height = 32
+	ldr	yCoord, [#352]						//base address where bricks start, -32 when we move up the game screen
+	ldr	xCoord, [#0]						//base address where bricks start, +64 as we print each row of bricks the x value goes from 0 to max over and over
 	ldr	height, [#32]
-
-	//width = 64
 	ldr	width, [#64]
 
-	bl drawShape		//branches to subroutine that takes values and draws pixels
+
+	//Loop for printing bricks
+loopTop:
+	
+	mov	colour, //hex purple					//init colour to puprle:3 hit
+	
+	cmp	yCoord, #224
+	movgt	colour, //hex blue					//if yCoord is in range change colour to blue:2 hit
+
+	cmp	yCoord, #288
+	movgt	colour, //hex green					//if yCoord in range change to green:1 hit
+	
+
+	//move x, y and colour into r0, r1, and r2
+	//need to give width and height?
+	bl DrawPixel
+
+	add	xCoord, #64						//move into location for next brick location horizontally
+	cmp	xCoord, #768						//see if we've hit the end
+	blt	loopTop							//if not, branch to top
+
+	sub	yCoord, #32						//move to next row of bricks up
+	mov	xCoord, #0						//reset x
+
+	cmp	yCoord, #192						//top buffer + 32(height of brick)
+	bgt	endLoop							//if we've printed to top row and y has hit where it should end, stop the loop
+	b	loopTop							//otherwise branch to loopTop to start printing this row
+
+endLoop:
+	//end, reset x and y maybe?
+
+
 
 
 	//hit flag; checks collision
 	bl checkCollision
+
 	if 0:
 		//not hit, don't needs to do anything
+
 	if 1:
 		//is hit. Need to either:
 			if grey: turn purple
