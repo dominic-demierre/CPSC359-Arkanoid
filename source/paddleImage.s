@@ -1,13 +1,11 @@
-
+.sect	.data
 .global paddleImage
 paddleImage:
 .int	0		@ x relative to the center of the board (negative will need to mean left, right is positive)
 .int	368		@ y realtive to the center of the board 
 .int	96		@ width of paddle
 .int	32		@ height of paddle
-.int	4		@ velocity of paddle (to add/subtract to y on update)
-
-
+.int	5		@ velocity of paddle (to add/subtract to y on update)
 .ascii "u\002;\377u\001<\377u\002;\377u\002;\377u\002;\377u\002;\377u\002;\377u\002;\377u\002;\377u\002;\377"
 .ascii "u\002;\377u\002;\377u\002;\377v\003<\377v\003<\377u\002;\377t\001:\377u\001<\377u\002;\377u\002;\377"
 .ascii "u\002;\377u\002;\377u\002;\377u\002;\377u\002;\377u\002;\377u\002;\377u\002;\377u\002;\377u\002;\377"

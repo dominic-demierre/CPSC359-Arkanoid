@@ -1,47 +1,6 @@
 
 .sect	.text
 
-/********************************************************
- * Purpose: To prompt a user for input using a snes	*
- * controller. Based on the button pressed, the 	*
- * program will inform the user which button has been 	*
- * pressed.						*
- * Pre: The GPIO pointer is initialized			*
- * Param: None						*
- * Return: The hexadecimal value of the button pressed  *
- ********************************************************/
-.global getInput
-getInput:
-	push	{lr}
-
-	@ setup pins (move this to be a function at the beginning of the program
-	ldr	r0, =GpioPtr			@ get address of pointer to initialize
-	bl	initGpioPtr			@ set up base address
-
-	mov	r0, #1				@ set for output in r1
-	mov	r1, #9				@ pin 9 in r1 (Latch)
-	bl	init_GPIO			@ set pin 9 to output
-
-	mov	r0, #1				@ set for output in r1
-	mov	r1, #11				@ pin 11 in r1 (Clock)
-	bl	init_GPIO			@ set pin 11 to output
-
-	mov	r0, #0				@ set for input in r1
-	mov	r1, #10				@ pin 10 in r1 (Data)
-	bl	init_GPIO			@ set pin 10 to input
-
-	@ get the input
-readInLoop:
-	bl	Read_SNES			@ get the input from the SNES paddle
-	mov	r1, #0xFFFF			@ mask to check if a button was pushed or not
-	teq	r0, r1				@ test to see if a button was pushed
-	beq	readInLoop			@ if not go back and wait until it one is pushed
-	
-	@ r0 contains the buttons pressed
-	pop	{lr}
-	bx	lr				@ end program
-
-
 /*--------------------- FUNCTIONS ----------------------*/
 
 /********************************************************
@@ -55,8 +14,9 @@ readInLoop:
  * Return: None						*
  * Inspiration borrowed from tutorial notes		*
  ********************************************************/
+.global init_GPIO
 init_GPIO:
-	push	{r4, r5, r7, lr}
+	push	{r4-r7, lr}
 
 	func	.req	r0
 	pin	.req	r1
@@ -66,6 +26,7 @@ init_GPIO:
 	temp	.req	r5
 	cnt	.req	r7	
 
+	@ move these functions over
 	ldr	gPtr, =GpioPtr			@ get the base address
 	ldr	addr, [gPtr]			@ read the value of the base address
 
@@ -94,7 +55,7 @@ setFuncLoop:
 	.unreq	temp
 	.unreq	cnt
 
-	pop	{r4, r5, r7, lr}
+	pop	{r4-r7, lr}
 	bx	lr				@ return to calling function
 
 /********************************************************
@@ -109,6 +70,7 @@ setFuncLoop:
  * Return: a register containing all 16 bits passed from*
  * the controller to the core in the proper ordering.	*
  ********************************************************/
+.global Read_SNES
 Read_SNES:
 	push	{r4, r5, lr}
 

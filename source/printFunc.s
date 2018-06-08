@@ -13,18 +13,20 @@ DrawPixel:
 
 	offset	.req	r4
 
-	ldr	r5, =frameBufferInfo
+	ldr	r5, =frameBufferInfo		@ get the frame buffer address
 
 	@ offset = (y * width) + x
-	ldr	r3, [r5, #4]		@ r3 is the screen width
-	mul	r1, r3
-	add	offset, r0, r1		@ r4 is the offset computed
+	ldr	r3, [r5, #4]			@ r3 is the screen width
+	mul	r1, r3				@ multiply the y value by the width
+	add	offset, r0, r1			@ r4 is the offset computed
 
 	@ offset *= 4 (32 bits per pixel/8 = 4 bytes per pixel)
-	lsl	offset, #2
+	lsl	offset, #2			@ multiply the offset by 4
 
-	ldr	r0, [r5]
-	str	r2, [r0, offset]
+	ldr	r0, [r5]			@ get the base address to add offset to
+	str	r2, [r0, offset]		@ store the pixel value in its approriate location
+
+	.unreq	offset
 
 	pop	{r4, r5, lr}
 	bx	lr
@@ -51,49 +53,46 @@ printBacking:
 	temp	.req	r3
 	offset	.req	r4
 
-	mov	sAddr, r2		@ r2 has the address of the image to print, save in sAddr
+	mov	sAddr, r2			@ r2 has the address of the image to print, save in sAddr
 
-	mov	r3, r2			@ move the image address into r3 to get coordinates
-	bl	getCoord
-	@ return is in r0 - x, r1 - y
+	mov	r3, r2				@ move the image address into r3 to get coordinates
+	bl	getCoord			@ get the coordinates of the image for printing
+	@ return is in r0 - x, r1 - y	
 	
-	add	colour, sAddr, #8 	@ address of first ascii
-	mov	x, r0	@ store x
-	mov	y, r1	@ store y
+	add	colour, sAddr, #8 		@ address of first ascii value
+	mov	x, r0	@ store x		@ copy the x value into x
+	mov	y, r1	@ store y		@ copy the y value into y to save
 
-	mov	outCnt, #0 		@ height counter
+	mov	outCnt, #0 			@ height counter
 outerLoop:
-	ldr	temp, [sAddr, #4]
-	cmp	outCnt, temp		@ compare counter with heigth
-	@cmp	outCnt, #15
-	bge	done
+	ldr	temp, [sAddr, #4]		@ store the screen height in temp
+	cmp	outCnt, temp			@ compare counter with heigth
+	bge	done				@ if the pixels for height are done, exit
 
-	mov	inCnt, #0 		@ counter
-	mov	offset, #0		@ offset of x
+	mov	inCnt, #0 			@ counter
+	mov	offset, #0			@ offset of x
 printLoop:
-	ldr	temp, [sAddr]
-	cmp	inCnt, temp	@ compare counter with width
-	@cmp	inCnt, #30
-	bge	finishRow
+	ldr	temp, [sAddr]			@ store the screen height in temp
+	cmp	inCnt, temp			@ compare counter with width
+	bge	finishRow			@ move to next row if current one is done printing
 	
 	@ call pixel draw
-	add	r0, x, offset	@ x + offset
-	mov	r1, y
-	ldr	r2, [colour]	@ get value of ascii at address r9
-	@mov	r2, #0
-	bl	DrawPixel		
+	add	r0, x, offset			@ x + offset for function call
+	mov	r1, y				@ move the y value into r1 to pass to function
+	ldr	r2, [colour]			@ get value of ascii at address r9		
+	bl	DrawPixel			@ print the pixel		
 
-	add	inCnt, #1
+	add	inCnt, #1			@ increment the inner loop counter
 	add 	offset, #1			@ increment offset by 1
-	add	colour, #4		@ move to next pixel colour (each is a word)
-	b	printLoop
+	add	colour, #4			@ move to next pixel colour (each is a word)
+	b	printLoop			@ go back to print the next pixel in the row
 
 finishRow:
-	add	outCnt, #1		@ increment counter
-	ldr	temp, =frameBufferInfo
-	ldr	temp, [temp, #4]
-	add	x, temp		@ add width of screen 
-	b	outerLoop
+	add	outCnt, #1			@ increment outer loop counter
+	ldr	temp, =frameBufferInfo		@ get the frame buffers address and store in temp
+	ldr	temp, [temp, #4]		@ get the width of the screen to add to x for next row
+	add	x, temp				@ add width of screen 
+	b	outerLoop			@ continue back to print the next row of pixels
 	
 done:	
 	.unreq	sAddr
@@ -131,85 +130,12 @@ getCoord:
 	lsr	r2, #1				@ divide height in half
 	sub	r2, r5, lsr #1			@ subtract image height divided in half
 
-	mov	r0, r1
-	mov	r1, r2	
+	mov	r0, r1				@ move the image x value into r0 to return
+	mov	r1, r2				@ move the image y value into r1 to return
 
 	pop	{r4, r5, lr}
 	bx	lr
 
-
-/******************************************
- * Purpose: To clear the screen making it 
- * blank
- *
- * These nested loop functions seem slow for refreshing... there must
- * be a faster way. maybe we don't need the blac clear?
- *
- ******************************************/
-.global clearScreen
-clearScreen:
-	push	{r4, r5, r6, r7, r8, r9, r10, lr}
-	
-	sAddr	.req	r10
-	colour	.req	r9
-	x	.req	r5
-	y	.req	r6
-	outCnt	.req	r7
-	inCnt	.req	r8
-	temp	.req	r3
-	offset	.req	r4
-
-	mov	sAddr, r2		@ r2 has the address of the image to print, save in sAddr
-
-	mov	r3, r2			@ move the image address into r3 to get coordinates
-	bl	getCoord
-	@ return is in r0 - x, r1 - y
-	
-	mov	x, r0	@ store x
-	mov	y, r1	@ store y
-
-	mov	outCnt, #0 		@ height counter
-clrOuterLoop:
-	ldr	temp, [sAddr, #4]
-	cmp	outCnt, temp		@ compare counter with heigth
-	bge	clrDone
-
-	mov	inCnt, #0 		@ counter
-	mov	offset, #0		@ offset of x
-clrPrintLoop:
-	ldr	temp, [sAddr]
-	cmp	inCnt, temp		@ compare counter with width
-	bge	clrFinishRow
-	
-	@ call pixel draw
-	add	r0, x, offset		@ x + offset
-	mov	r1, y
-	@ldr	r2, [colour]		@ get value of ascii at address r9
-	mov	r2, #0
-	bl	DrawPixel		
-
-	add	inCnt, #1
-	add 	offset, #1		@ increment offset by 1
-	b	clrPrintLoop
-
-clrFinishRow:
-	add	outCnt, #1		@ increment counter
-	ldr	temp, =frameBufferInfo
-	ldr	temp, [temp, #4]
-	add	x, temp		@ add width of screen 
-	b	clrOuterLoop
-	
-clrDone:	
-	.unreq	sAddr
-	.unreq	colour
-	.unreq	x
-	.unreq	y
-	.unreq	outCnt
-	.unreq	inCnt
-	.unreq	temp
-	.unreq	offset
-	pop	{r4, r5, r6, r7, r8, r9, r10, lr}
-	bx	lr
 
 /*******************************************
  *
@@ -219,7 +145,7 @@ clrDone:
  *******************************************/
 .global	drawPaddle
 drawPaddle:
-	push	{r4, r5, r6, r7, r8, r9, r10, lr}
+	push	{r4-r10, lr}
 	
 	sAddr	.req	r10
 	colour	.req	r9
@@ -230,46 +156,46 @@ drawPaddle:
 	temp	.req	r3
 	offset	.req	r4
 
-	ldr	sAddr, =paddleImage	@ get the paddle address
-	mov	r3, sAddr		@ move the address into r3 for function call
+	ldr	sAddr, =paddleImage		@ get the paddle address
+	mov	r3, sAddr			@ move the address into r3 for function call
 
-	bl	getPaddleCoord		@ get the coordinates of where to draw the ball relative to the board
+	bl	getPaddleCoord			@ get the coordinates of where to draw the ball relative to the board
 	@ return is in r0 - x, r1 - y	
 
 	@ get paddle coordinate realtive to the screen
-	add	colour, sAddr, #20 	@ address of first ascii
-	mov	x, r0	@ store x	@ save the value of x returned from getCoord
-	mov	y, r1	@ store y	@ save the value of y returned from getCoord
+	add	colour, sAddr, #20 		@ address of first ascii
+	mov	x, r0	@ store x		@ save the value of x returned from getCoord
+	mov	y, r1	@ store y		@ save the value of y returned from getCoord
 
-	mov	outCnt, #0 		@ height counter
+	mov	outCnt, #0 			@ height counter
 paddleOuterLoop:
-	ldr	temp, [sAddr, #12]	@ get the height of the paddle
-	cmp	outCnt, temp		@ compare counter with heigth
-	bge	paddlePrintDone		@ if the counter reaches the height, terminate
+	ldr	temp, [sAddr, #12]		@ get the height of the paddle
+	cmp	outCnt, temp			@ compare counter with heigth
+	bge	paddlePrintDone			@ if the counter reaches the height, terminate
 
-	mov	inCnt, #0 		@ counter
-	mov	offset, #0		@ offset of x
+	mov	inCnt, #0 			@ counter
+	mov	offset, #0			@ offset of x
 paddlePrintLoop:
-	ldr	temp, [sAddr, #8]	@ get the width of the paddle
-	cmp	inCnt, temp		@ compare counter with width
-	bge	paddleFinishRow		@ if the counter reaches the width, terminate
+	ldr	temp, [sAddr, #8]		@ get the width of the paddle
+	cmp	inCnt, temp			@ compare counter with width
+	bge	paddleFinishRow			@ if the counter reaches the width, terminate
 	
 	@ call pixel draw
-	add	r0, x, offset		@ x + offset
-	mov	r1, y			@ get the y value
-	ldr	r2, [colour]		@ get value of ascii in colour
-	bl	DrawPixel		@ draw the pixel in the (x,y) location	
+	add	r0, x, offset			@ x + offset
+	mov	r1, y				@ get the y value
+	ldr	r2, [colour]			@ get value of ascii in colour
+	bl	DrawPixel			@ draw the pixel in the (x,y) location	
 
-	add	inCnt, #1		@ increment the loop counter by 1
-	add 	offset, #1		@ increment offset by 1
-	add	colour, #4		@ move to next pixel colour (each is a word)
+	add	inCnt, #1			@ increment the loop counter by 1
+	add 	offset, #1			@ increment offset by 1
+	add	colour, #4			@ move to next pixel colour (each is a word)
 	b	paddlePrintLoop
 
 paddleFinishRow:
-	add	outCnt, #1		@ increment counter
-	ldr	temp, =frameBufferInfo	@ get address of frame buffer to get the width value
-	ldr	temp, [temp, #4]	@ go to the byte containing the width
-	add	x, temp			@ add width of screen 
+	add	outCnt, #1			@ increment counter
+	ldr	temp, =frameBufferInfo		@ get address of frame buffer to get the width value
+	ldr	temp, [temp, #4]		@ go to the byte containing the width
+	add	x, temp				@ add width of screen 
 	b	paddleOuterLoop
 	
 paddlePrintDone:	
@@ -281,7 +207,7 @@ paddlePrintDone:
 	.unreq	inCnt
 	.unreq	temp
 	.unreq	offset
-	pop	{r4, r5, r6, r7, r8, r9, r10, lr}
+	pop	{r4-r10, lr}
 	bx	lr
 
 /******************************************
@@ -311,7 +237,7 @@ getPaddleCoord:
 	mov	r0, r1				@ prepare for returning 
 	mov	r1, r2				@ prepare for returning
 
-	pop	{r4, r5, r4, r6, r7, lr}
+	pop	{r4, r5, r6, r7, lr}
 	bx	lr
 
 
