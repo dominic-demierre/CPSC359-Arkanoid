@@ -142,9 +142,11 @@ inputLoop:
 	@str	r0, [r10]
 
 	bl	updatePaddle
+	bl	updateBall
 	mov	r2, r4
 	bl	printBacking
 	bl	drawPaddle
+	bl	drawBall
 	b	inputLoop
 	
 endTestPaddle:	
