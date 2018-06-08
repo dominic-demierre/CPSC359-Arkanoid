@@ -269,6 +269,11 @@ endTestPaddle:
 	pop	{r4-r6, r10, lr}
 	bx	lr
 
+/******************************************************
+ * Purpose: To reset the ball and paddle positions
+ *
+ *
+ ******************************************************/
 resetGame:
 	push	{r4-r5, lr}
 	
