@@ -1,7 +1,7 @@
 /*****************************************************
  * CPSC 359 Assignment 2, Arkanoid
- * Dominic (last name), Maha (last name), 
- * Jessica (last name), Glenn Skelton
+ * Dominic , Maha Asim, 
+ * Jessica Pelley, Glenn Skelton
  *
  * Due June 12, 2018
  *
@@ -49,10 +49,15 @@ main:
 	@ will only go on if select is pressed else it will terminate, r0 will have 0 or 1 
 	cmp	r0, #0				@ if the function mainMenu returned 0, terminate the program
 	beq	end				@ exit the program, will need to write a blank screen
+	bne	gameLoop	
 	@ if function returned 1, go on to the game loop
 
 gameLoop:
-
+	@ for test purposes
+	ldr	r2, =gameBackground	@ pass the address for image to print
+	bl	printBacking
+	bl	drawPaddle
+	bl	testPaddle
 
 
 
@@ -277,17 +282,17 @@ endTestPaddle:
 resetGame:
 	push	{r4-r5, lr}
 	
-	// reset the paddle:
+	@ reset the paddle:
 	
-	ldr	r4, =paddlePosition
+	ldr	r4, =paddleImage
 	mov	r5, #0
 	str	r5, [r4]
 	mov	r5, #346
 	str	r5, [r4, #4]
 	
-	// reset the ball:
-	
-	ldr	r4, =ballPosition
+	@ reset the ball:
+/*	
+	ldr	r4, =ballImage
 	mov	r5, #200
 	str	r5, [r4]
 	mov	r5, #200
@@ -298,7 +303,7 @@ resetGame:
 	str	r5, [r4, #12]
 	mov	r5, #0
 	str	r5, [r4, #16]
-	
+*/	
 	b	gameLoop
 	
 	pop	{r4-r5, pc}
