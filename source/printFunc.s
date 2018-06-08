@@ -72,7 +72,7 @@ outerLoop:
 	mov	inCnt, #0 			@ counter
 	mov	offset, #0			@ offset of x
 printLoop:
-	ldr	temp, [sAddr]			@ store the screen height in temp
+	ldr	temp, [sAddr]			@ store the screen width in temp
 	cmp	inCnt, temp			@ compare counter with width
 	bge	finishRow			@ move to next row if current one is done printing
 	
@@ -210,6 +210,81 @@ paddlePrintDone:
 	pop	{r4-r10, lr}
 	bx	lr
 
+/****************************************
+ *
+ ****************************************/
+.global	drawBall
+drawBall:
+	push	{r4-r10, lr}
+	
+	sAddr	.req	r10
+	colour	.req	r9
+	x	.req	r5
+	y	.req	r6
+	outCnt	.req	r7
+	inCnt	.req	r8
+	temp	.req	r3
+	offset	.req	r4
+
+	ldr	sAddr, =ballImage		@ get the ball address
+	mov	r3, sAddr			@ move the address into r3 for function call
+
+	bl	getBallCoord			@ get the coordinates of where to draw the ball relative to the board
+	@ return is in r0 - x, r1 - y	
+
+	@ get ball coordinate relative to the screen
+	add	colour, sAddr, #20 		@ address of first ascii
+	mov	x, r0	@ store x		@ save the value of x returned from getCoord
+	mov	y, r1	@ store y		@ save the value of y returned from getCoord
+
+	mov	outCnt, #0 			@ height counter
+
+db_OuterLoop:
+	ldr	temp, [sAddr, #8]		@ get the diameter of the ball
+	cmp	outCnt, temp			@ compare counter with height
+	bge	db_PrintDone			@ if the counter reaches the height, terminate
+
+	mov	inCnt, #0 			@ counter
+	mov	offset, #0			@ offset of x
+
+db_PrintLoop:
+	ldr	temp, [sAddr, #8]		@ get the diameter of the ball
+	cmp	inCnt, temp			@ compare counter with diameter
+	bge	db_FinishRow			@ if the counter reaches the width, terminate
+	
+	@ call pixel draw
+	add	r0, x, offset			@ x + offset
+	mov	r1, y				@ get the y value
+	ldr	r2, [colour]			@ get value of ascii in colour
+
+	mov 	r3, #0xffffff
+	cmp 	r2, r3
+	blne	DrawPixel
+
+	add	inCnt, #1			@ increment the loop counter by 1
+	add 	offset, #1			@ increment offset by 1
+	add	colour, #4			@ move to next pixel colour (each is a word)
+	b	db_PrintLoop
+
+db_FinishRow:
+	add	outCnt, #1			@ increment counter
+	ldr	temp, =frameBufferInfo		@ get address of frame buffer to get the width value
+	ldr	temp, [temp, #4]		@ go to the byte containing the width
+	add	x, temp				@ add width of screen 
+	b	db_OuterLoop
+	
+db_PrintDone:	
+	.unreq	sAddr
+	.unreq	colour
+	.unreq	x
+	.unreq	y
+	.unreq	outCnt
+	.unreq	inCnt
+	.unreq	temp
+	.unreq	offset
+	pop	{r4-r10, lr}
+	bx	lr
+
 /******************************************
  * Purpose: to get the x/y value of an image
  * based on the size of the screen
@@ -233,6 +308,29 @@ getPaddleCoord:
 	add	r1, r4				@ add the x displacement to the location
 	lsr	r2, #1				@ divide height in half
 	add	r2, r7, lsr #1			@ add the image height//2 to the screen height//2
+	add	r2, r5				@ add the displacement to the coordinate in r2 (y)
+	mov	r0, r1				@ prepare for returning 
+	mov	r1, r2				@ prepare for returning
+
+	pop	{r4, r5, r6, r7, lr}
+	bx	lr
+
+.global	getBallCoord
+getBallCoord:
+	push	{r4, r5, r6, r7, lr}
+
+	ldr	r0, =frameBufferInfo
+	ldr	r1, [r0, #4]			@ width
+	ldr	r2, [r0, #8]			@ height
+	@ load image dimensions
+	@ r3 has the image address, maybe change to LDMIA
+	ldmia	r3, {r4-r6}			@ r4 - x displacement, r5 - y disp, r6 - ball diameter
+	
+	lsr	r1, #1				@ divide width of screen in half
+	sub	r1, r6, lsr #1			@ subtract half the image width
+	add	r1, r4				@ add the x displacement to the location
+	lsr	r2, #1				@ divide height in half
+	add	r2, r6, lsr #1			@ add the image height//2 to the screen height//2
 	add	r2, r5				@ add the displacement to the coordinate in r2 (y)
 	mov	r0, r1				@ prepare for returning 
 	mov	r1, r2				@ prepare for returning

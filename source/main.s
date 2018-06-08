@@ -259,9 +259,11 @@ inputLoop:
 
 	@ loop of updates and drawing functions 
 	bl	updatePaddle
+	bl	updateBall
 	mov	r2, r4
 	bl	printBacking
 	bl	drawPaddle
+	bl	drawBall
 	b	inputLoop
 	
 
