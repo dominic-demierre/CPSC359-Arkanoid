@@ -106,6 +106,126 @@ done:
 	pop	{r4, r5, r6, r7, r8, r9, r10, lr}
 	bx	lr
 
+/*****************************************
+ * prints current lives counter
+ * takes no arguments, returns nothing
+******************************************/
+.global	printLives
+printLives:
+	push	{lr}
+
+	mov	r0, #64				@x and y set manually
+	mov	r1, #368
+	rsb	r1, r1, #0			@y is negative
+	ldr	r2, =sprite_lives
+	bl	drawSprite			@draw "lives:" sprite
+
+	ldr	r3, =lives
+	ldr	r3, [r3]			@get number of lives
+
+	mov	r0, #176
+	mov	r1, #368
+	rsb	r1, r1, #0
+	ldr	r2, =sprite_refs
+	add	r2, r3, LSL #2			@find address of correct sprite
+	ldr	r2, [r2]
+	bl	drawSprite			@print correct sprite
+
+	pop	{lr}
+	bx	lr
+
+/*******************************************
+ * prints current score counter
+ * takes no arguments, returns nothing
+*******************************************/
+.global	printScore
+printScore:
+	push	{r4, r5, r6, lr}
+	
+	temp	.req r4
+	offset	.req r5
+	score	.req r6
+
+	mov	r0, #288			@x and y set manually
+	rsb	r0, r0, #0			@x is negative
+	mov	r1, #368
+	rsb	r1, r1, #0			@y is negative
+	ldr	r2, =sprite_score
+	bl	drawSprite			@draw "score:" sprite
+
+	ldr	r3, =score
+	ldr	score, [r3]			@get score
+
+	mov	offset, #0
+
+ps_thousands:
+	subs	temp, score, #1000		@test thousands
+	movpl	score, temp			@if result >= 0 update score reg
+	addpl	offset, #1			@increment offset
+
+	bpl	ps_thousands			@continue testing thousands
+
+	mov	r0, #176			@x and y set manually
+	rsb	r0, r0, #0			@x is negative
+	mov	r1, #368
+	rsb	r1, r1, #0			@y is negative
+	ldr	r2, =sprite_refs
+	add	r2, offset, LSL #2		@find address of correct sprite
+	ldr	r2, [r2]
+	bl	drawSprite			@print correct sprite
+
+	mov offset, #0
+	
+ps_hundreds:
+	subs	temp, score, #100		@test hundreds
+	movpl	score, temp			@if result >= 0 update score reg
+	addpl	offset, #1			@increment offset
+
+	bpl	ps_hundreds			@continue testing hundreds
+
+	mov	r0, #144			@x and y set manually
+	rsb	r0, r0, #0			@x is negative
+	mov	r1, #368
+	rsb	r1, r1, #0			@y is negative
+	ldr	r2, =sprite_refs
+	add	r2, offset, LSL #2		@find address of correct sprite
+	ldr	r2, [r2]
+	bl	drawSprite			@print correct sprite
+
+	mov offset, #0
+
+ps_tens:
+	subs	temp, score, #10		@test tens
+	movpl	score, temp			@if result >=0 update score reg
+	addpl	offset, #1			@increment offset
+
+	bpl	ps_tens				@continue testing tens
+
+	mov	r0, #112			@x and y set manually
+	rsb	r0, r0, #0			@x is negative
+	mov	r1, #368
+	rsb	r1, r1, #0			@y is negative
+	ldr	r2, =sprite_refs
+	add	r2, offset, LSL #2		@find address of correct sprite
+	ldr	r2, [r2]
+	bl	drawSprite			@print correct sprite
+
+ps_ones:
+	mov	r0, #80				@x and y set manually
+	rsb	r0, r0, #0			@x is negative
+	mov	r1, #368
+	rsb	r1, r1, #0			@y is negative
+	ldr	r2, =sprite_refs
+	add	r2, score, LSL #2		@only ones remain in score reg
+	ldr	r2, [r2]
+	bl	drawSprite			@print correct sprite
+
+	.unreq	temp
+	.unreq	offset
+	.unreq	score
+	pop	{r4, r5, r6, lr}
+	bx	lr
+
 /******************************************
  * Purpose: to get the x/y value of an image
  * based on the size of the screen
@@ -331,6 +451,39 @@ getBallCoord:
 	add	r1, r4				@ add the x displacement to the location
 	lsr	r2, #1				@ divide height in half
 	add	r2, r6, lsr #1			@ add the image height//2 to the screen height//2
+	add	r2, r5				@ add the displacement to the coordinate in r2 (y)
+	mov	r0, r1				@ prepare for returning 
+	mov	r1, r2				@ prepare for returning
+
+	pop	{r4, r5, r6, r7, lr}
+	bx	lr
+
+/************************************************
+ * gets offset for a counter sprite
+ * based on screen dimensions
+ * r0 = x
+ * r1 = y
+ * r3 = sprite address
+************************************************/
+.global getSpriteCoord
+getSpriteCoord:
+	push	{r4, r5, r6, r7, lr}
+
+	mov	r4, r0
+	mov	r5, r1
+
+	ldr	r0, =frameBufferInfo
+	ldr	r1, [r0, #4]			@ width
+	ldr	r2, [r0, #8]			@ height
+	@ load image dimensions
+	@ r3 has the image address, maybe change to LDMIA
+	ldmia	r3, {r6, r7}			@ r4 - x displacement, r5 - y disp, r6 - sprite width, r7 - sprite height
+	
+	lsr	r1, #1				@ divide width of screen in half
+	sub	r1, r6, lsr #1			@ subtract half the image width
+	add	r1, r4				@ add the x displacement to the location
+	lsr	r2, #1				@ divide height in half
+	add	r2, r7, lsr #1			@ add the image height//2 to the screen height//2
 	add	r2, r5				@ add the displacement to the coordinate in r2 (y)
 	mov	r0, r1				@ prepare for returning 
 	mov	r1, r2				@ prepare for returning

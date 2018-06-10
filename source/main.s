@@ -35,6 +35,12 @@ clearBoard:
 resetPositions:
 	.int	0, 368		@ starting positions for paddle and ball (x,y of paddle; x, y of ball)
 
+.global score
+score:	.int 0
+
+.global lives
+lives:	.int 3
+
 
 /*----------------------- CODE ----------------------*/
 .sect	.data
