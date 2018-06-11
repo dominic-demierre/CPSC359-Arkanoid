@@ -45,32 +45,32 @@ main:
 	@ print the starting screen		
 
 	@ get user input to determine mode
-	//bl 	mainMenu			@ get user input for starting or quiting the game
+	bl 	mainMenu			@ get user input for starting or quiting the game
 	@ will only go on if select is pressed else it will terminate, r0 will have 0 or 1 
 
-	//cmp	r0, #0				@ if the function mainMenu returned 0, terminate the program
-	//beq	end				@ exit the program, will need to write a blank screen
-	//bne	startGame			@ if function returned 1, go on to the game loop
+	cmp	r0, #0				@ if the function mainMenu returned 0, terminate the program
+	beq	end				@ exit the program, will need to write a blank screen
+	bne	startGame			@ if function returned 1, go on to the game loop
 
 startGame:
-	ldr	r4, =gameBackground
-	mov	r2, r4				@ prepare the background image for function call
+	ldr	r5, =gameBackground
+	mov	r2, r5				@ prepare the background image for function call
 	bl	printBacking			@ print the background image
-	@bl	printLives
+	bl	printLives
 	bl	drawPaddle			@ draw the paddle on the scren
 	bl	drawBall			@ draw the ball on the screen
 
 wait:
-	//bl	Read_SNES			@ get the input from the SNES paddle
-	//ldr	r1, =0xFFFE	
-	//teq	r0, r1				@ test to see if the B button has been pressed to start
-	//beq	gameLoop			@ if the B button was pressed, start the game
-	//bne	wait				@ while the input is not B, keep waiting
+	bl	Read_SNES			@ get the input from the SNES paddle
+	ldr	r1, =0xFFFE	
+	teq	r0, r1				@ test to see if the B button has been pressed to start
+	beq	gameLoop			@ if the B button was pressed, start the game
+	bne	wait				@ while the input is not B, keep waiting
 gameLoop:
 				
 	bl	Read_SNES			@ get the input from the SNES paddle	
 	mov	r4, r0	
-/*
+
 	@ start button
 	mvn	r1, r0				@ get the compliment of r0
 	mov	r2, #0x8			@ for seeing if start was pressed
@@ -88,20 +88,19 @@ gameLoop:
 	teq	r2, #1				@ see if bit is turned on
 	bleq	resetGame			@ if start was pressed, reset the game parameters
 	bleq	main				@ if select was pressed, go back to the main menu
-*/
+
 	@ loop of updates and drawing functions 
 	mov	r0, r4
 	bl	updatePaddle
 	bl	updateBall
-	mov	r2, r4
+	mov	r2, r5
 	bl	printBacking
-	@bl	printLives			@ there is an issue with printLives
 	bl	drawPaddle
+	bl	printLives			@ there is an issue with printLives
 	bl	drawBall
 	b	gameLoop
 
 end:
-	//.unreq	btnVal
 	bl	exit				@ terminate the program
 
 
