@@ -4,9 +4,9 @@
 .global ballImage
 ballImage:
 .int 0			//x
-.int 352		//y
+.int 368		//y
 .int 12			//diameter
-.int 8			//velocity
+.int 4			//velocity
 .int 0			//direction (00 = up-left, 01 = up-right, 10 = down-left, 11 = down-right)
 
 .ascii "\377\377\377\000\377\377\377\000\377\377\377\000\000\000\000\377\000\000\000\377\000\000\000\377\000\000\000\377\000\000\000\377\000\000\000\377\377\377\377\000"

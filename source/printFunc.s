@@ -42,7 +42,7 @@ DrawPixel:
  ******************************************/
 .global printBacking
 printBacking:
-	push	{r4, r5, r6, r7, r8, r9, r10, lr}
+	push	{r4-r10, lr}
 	
 	sAddr	.req	r10
 	colour	.req	r9
@@ -103,13 +103,14 @@ done:
 	.unreq	inCnt
 	.unreq	temp
 	.unreq	offset
-	pop	{r4, r5, r6, r7, r8, r9, r10, lr}
+	pop	{r4-r10, lr}
 	bx	lr
 
 /*****************************************
  * prints current lives counter
  * takes no arguments, returns nothing
 ******************************************/
+@ Commented out until drawSprite is resolved
 .global	printLives
 printLives:
 	push	{lr}
@@ -138,6 +139,7 @@ printLives:
  * prints current score counter
  * takes no arguments, returns nothing
 *******************************************/
+/* commented out until drawSprite is resolved
 .global	printScore
 printScore:
 	push	{r4, r5, r6, lr}
@@ -225,7 +227,7 @@ ps_ones:
 	.unreq	score
 	pop	{r4, r5, r6, lr}
 	bx	lr
-
+*/
 /******************************************
  * Purpose: to get the x/y value of an image
  * based on the size of the screen
@@ -405,6 +407,79 @@ db_PrintDone:
 	pop	{r4-r10, lr}
 	bx	lr
 
+/*******************************************
+ *
+ * This needs to be finished editing
+ *
+ *
+ *******************************************/
+.global	drawSprite
+drawSprite:
+	push	{r4-r10, lr}
+	
+	sAddr	.req	r10
+	colour	.req	r9
+	x	.req	r5
+	y	.req	r6
+	outCnt	.req	r7
+	inCnt	.req	r8
+	temp	.req	r3
+	offset	.req	r4
+
+	mov	sAddr, r2			@ move the sprite address into sAddr to store
+	mov	r3, sAddr			@ move the address into r3 for function call
+
+	@bl	getSpriteCoord			@ get the coordinates relative to the board
+	@ return is in r0 - x, r1 - y	
+
+	@ get paddle coordinate realtive to the screen
+	add	colour, sAddr, #8 		@ address of first ascii
+	mov	x, r0	@ store x		@ save the value of x returned from getCoord
+	mov	y, r1	@ store y		@ save the value of y returned from getCoord
+
+	mov	outCnt, #0 			@ height counter
+spriteOuterLoop:
+	ldr	temp, [sAddr]			@ get the height of the sprite
+	cmp	outCnt, temp			@ compare counter with heigth
+	bge	spritePrintDone			@ if the counter reaches the height, terminate
+
+	mov	inCnt, #0 			@ counter
+	mov	offset, #0			@ offset of x
+spritePrintLoop:
+	ldr	temp, [sAddr, #4]		@ get the width of the paddle
+	cmp	inCnt, temp			@ compare counter with width
+	bge	spriteFinishRow			@ if the counter reaches the width, terminate
+	
+	@ call pixel draw
+	add	r0, x, offset			@ x + offset
+	mov	r1, y				@ get the y value
+	ldr	r2, [colour]			@ get value of ascii in colour
+	bl	DrawPixel			@ draw the pixel in the (x,y) location	
+
+	add	inCnt, #1			@ increment the loop counter by 1
+	add 	offset, #1			@ increment offset by 1
+	add	colour, #4			@ move to next pixel colour (each is a word)
+	b	spritePrintLoop
+
+spriteFinishRow:
+	add	outCnt, #1			@ increment counter
+	ldr	temp, =frameBufferInfo		@ get address of frame buffer to get the width value
+	ldr	temp, [temp, #4]		@ go to the byte containing the width
+	add	x, temp				@ add width of screen 
+	b	spriteOuterLoop
+	
+spritePrintDone:	
+	.unreq	sAddr
+	.unreq	colour
+	.unreq	x
+	.unreq	y
+	.unreq	outCnt
+	.unreq	inCnt
+	.unreq	temp
+	.unreq	offset
+	pop	{r4-r10, lr}
+	bx	lr
+
 /******************************************
  * Purpose: to get the x/y value of an image
  * based on the size of the screen
@@ -435,6 +510,13 @@ getPaddleCoord:
 	pop	{r4, r5, r6, r7, lr}
 	bx	lr
 
+/******************************************
+ * Purpose: to get the x/y value of an image
+ * based on the size of the screen
+ *
+ * r3 - the address of the image
+ * return: r0 - x, r1 - y
+ ******************************************/
 .global	getBallCoord
 getBallCoord:
 	push	{r4, r5, r6, r7, lr}
@@ -490,13 +572,6 @@ getSpriteCoord:
 
 	pop	{r4, r5, r6, r7, lr}
 	bx	lr
-
-
-/*------------------- VARIABLES --------------------*/
-.sect	.data
-
 	
 
 .end
-
-3

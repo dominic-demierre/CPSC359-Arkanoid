@@ -1,6 +1,6 @@
 /*****************************************************
  * CPSC 359 Assignment 2, Arkanoid
- * Dominic , Maha Asim, 
+ * Dominic Demierre, Maha Asim, 
  * Jessica Pelley, Glenn Skelton
  *
  * Due June 12, 2018
@@ -9,11 +9,8 @@
 
 .sect	.data
 
-
-.align
-.global test
-test:
-	.asciz	"test"
+/* upper boundary of ball is a little off */
+/* need to try and fix the refresh */
 
 .align
 .globl	frameBufferInfo
@@ -31,9 +28,6 @@ GpioPtr:
 clearBoard:
 	.int	768		@ width of the clear screen
 	.int	896		@ height of the clear screen
-
-resetPositions:
-	.int	0, 368		@ starting positions for paddle and ball (x,y of paddle; x, y of ball)
 
 .global score
 score:	.int 0
@@ -53,21 +47,59 @@ main:
 	@ get user input to determine mode
 	bl 	mainMenu			@ get user input for starting or quiting the game
 	@ will only go on if select is pressed else it will terminate, r0 will have 0 or 1 
+
 	cmp	r0, #0				@ if the function mainMenu returned 0, terminate the program
 	beq	end				@ exit the program, will need to write a blank screen
-	bne	gameLoop	
-	@ if function returned 1, go on to the game loop
+	bne	startGame			@ if function returned 1, go on to the game loop
 
+startGame:
+	ldr	r4, =gameBackground
+	mov	r2, r4				@ prepare the background image for function call
+	bl	printBacking			@ print the background image
+	bl	printLives
+	bl	drawPaddle			@ draw the paddle on the scren
+	bl	drawBall			@ draw the ball on the screen
+wait:
+	bl	Read_SNES			@ get the input from the SNES paddle
+	ldr	r1, =0xFFFE	
+	teq	r0, r1				@ test to see if the B button has been pressed to start
+	beq	gameLoop			@ if the B button was pressed, start the game
+	bne	wait				@ while the input is not B, keep waiting
 gameLoop:
-	@ for test purposes
-	ldr	r2, =gameBackground	@ pass the address for image to print
+	btnVal	.req	r0			
+
+	bl	Read_SNES			@ get the input from the SNES paddle	
+	
+	@ start button
+	mvn	r1, btnVal			@ get the compliment of r0
+	mov	r2, #0x8			@ for seeing if start was pressed
+	and	r2, r2, r1			@ extract the bit for start
+	lsr	r2, #3				@ shift the bit for testing if on for start
+	teq	r2, #1				@ see if bit is turned on
+	bleq	resetGame			@ if start was pressed, reset the game parameters
+	bleq	startGame			@ go back to the start of the game
+
+	@select button
+	mvn	r1, btnVal			@ get the compliment of r0
+	mov	r2, #0x4			@ for seeing if select was pressed
+	and	r2, r2, r1			@ extract the bit for select
+	lsr	r2, #2				@ shift the bit for testing if on for select
+	teq	r2, #1				@ see if bit is turned on
+	bleq	resetGame			@ if start was pressed, reset the game parameters
+	bleq	main				@ if select was pressed, go back to the main menu
+
+	@ loop of updates and drawing functions 
+	bl	updatePaddle
+	bl	updateBall
+	mov	r2, r4
 	bl	printBacking
+	@bl	printLives			@ there is an issue with printLives
 	bl	drawPaddle
-	bl	testPaddle
-
-
+	bl	drawBall
+	b	gameLoop
 
 end:
+	.unreq	btnVal
 	bl	exit				@ terminate the program
 
 
@@ -197,126 +229,37 @@ endMainLoop:
 	bx	lr
 
 /******************************************************
- * Purpose: To test printing all of the screens
- * will eventually make the print a general function
- *
- *
- ******************************************************/
-testBackgrounds:
-	push	{lr}
-
-	@ call print background to test functionality of linking
-	@ to print the backing to the screen, you only need to pass the image address
-
-	@ clear and print background
-	ldr	r2, =splashStart
-	bl	printBacking
-	
-	ldr	r0, =0x000FFFFF
-	bl	delayMicroseconds	@ delay so that I can see image
-	
-	@ clear and print background
-	ldr	r2, =splashQuit
-	bl	printBacking
-
-	ldr	r0, =0x000FFFFF
-	bl	delayMicroseconds	@ delay so that I can see image
-
-	@ clear and print background
-	ldr	r2, =gameBackground	@ pass the address for image to print
-	bl	printBacking
-	bl	drawPaddle
-	
-	pop	{lr}
-	bx	lr
-
-/******************************************************
- * Purpose: To test printing all of the screens
- * will eventually make the print a general function
- *
- *
- ******************************************************/
-testPaddle:
-	push	{r4-r6, r10, lr}
-	ldr	r4, =gameBackground
-	ldr	r10, =paddleImage
-	
-	
-inputLoop:
-	bl	Read_SNES			@ get the input from the SNES paddle
-	
-	@ start button
-	
-	mvn	r0, r0				@ get the compliment of r0
-	mov	r1, #0x8			@ for seeing if start was pressed
-	and	r1, r1, r0			@ extract the bit for start
-	lsr	r1, #3				@ shift the bit for testing if on for start
-	teq	r1, #1				@ see if bit is turned on
-	beq	resetGame			@ if start was pressed proceed
-	
-	@select button
-	
-	mvn	r0, r0				@ get the compliment of r0
-	mov	r1, #0x4			@ for seeing if select was pressed
-	and	r1, r1, r0			@ extract the bit for select
-	lsr	r1, #2				@ shift the bit for testing if on for select
-	teq	r1, #1				@ see if bit is turned on
-	beq	mainMenu			@ if select was pressed proceed
-	
-	@ if start was pressed, go to label resetPositions, write values in label into the paddle and ball labels to reset
-	@ if select was pressed, branch to the main menu label (also reset values in paddle and ball)
-
-	beq	endTestPaddle	
-
-	@ loop of updates and drawing functions 
-	bl	updatePaddle
-	bl	updateBall
-	mov	r2, r4
-	bl	printBacking
-	bl	drawPaddle
-	bl	drawBall
-	b	inputLoop
-	
-
-endTestPaddle:	
-	pop	{r4-r6, r10, lr}
-	bx	lr
-
-/******************************************************
  * Purpose: To reset the ball and paddle positions
  *
  *
  ******************************************************/
 resetGame:
-	push	{r4-r5, lr}
+	push	{lr}
 	
 	@ reset the paddle:
-	
-	ldr	r4, =paddleImage
-	mov	r5, #0
-	str	r5, [r4]
-	mov	r5, #346
-	str	r5, [r4, #4]
+	ldr	r0, =paddleImage
+	mov	r1, #0
+	str	r1, [r0]
+	mov	r1, #368
+	str	r1, [r0, #4]
 	
 	@ reset the ball:
-/*	
-	ldr	r4, =ballImage
-	mov	r5, #200
-	str	r5, [r4]
-	mov	r5, #200
-	str	r5, [r4, #4]
-	mov	r5, #0
-	str	r5, [r4, #8]
-	mov	r5, #2
-	str	r5, [r4, #12]
-	mov	r5, #0
-	str	r5, [r4, #16]
-*/	
-	b	gameLoop
+	ldr	r0, =ballImage
+	mov	r1, #0
+	str	r1, [r0]
+	mov	r1, #368
+	str	r1, [r0, #4]
+	mov	r1, #12
+	str	r1, [r0, #8]
+	mov	r1, #4
+	str	r1, [r0, #12]
+	mov	r1, #0
+	str	r1, [r0, #16]
 	
-	pop	{r4-r5, pc}
+	pop	{lr}
+	bx	lr
+	
 
-	
 
 .end
 
