@@ -115,8 +115,8 @@ done:
 printLives:
 	push	{lr}
 
-	mov	r0, #64				@x and y set manually
-	mov	r1, #368
+	mov	r0, #192			@x and y set manually
+	mov	r1, #448
 	rsb	r1, r1, #0			@y is negative
 	ldr	r2, =sprite_lives
 	bl	drawSprite			@draw "lives:" sprite
@@ -124,8 +124,8 @@ printLives:
 	ldr	r3, =lives
 	ldr	r3, [r3]			@get number of lives
 
-	mov	r0, #176
-	mov	r1, #368
+	mov	r0, #304
+	mov	r1, #448
 	rsb	r1, r1, #0
 	ldr	r2, =sprite_refs
 	add	r2, r3, LSL #2			@find address of correct sprite
@@ -139,7 +139,7 @@ printLives:
  * prints current score counter
  * takes no arguments, returns nothing
 *******************************************/
-/* commented out until drawSprite is resolved
+
 .global	printScore
 printScore:
 	push	{r4, r5, r6, lr}
@@ -148,9 +148,9 @@ printScore:
 	offset	.req r5
 	score	.req r6
 
-	mov	r0, #288			@x and y set manually
+	mov	r0, #224			@x and y set manually
 	rsb	r0, r0, #0			@x is negative
-	mov	r1, #368
+	mov	r1, #448
 	rsb	r1, r1, #0			@y is negative
 	ldr	r2, =sprite_score
 	bl	drawSprite			@draw "score:" sprite
@@ -167,9 +167,9 @@ ps_thousands:
 
 	bpl	ps_thousands			@continue testing thousands
 
-	mov	r0, #176			@x and y set manually
+	mov	r0, #112			@x and y set manually
 	rsb	r0, r0, #0			@x is negative
-	mov	r1, #368
+	mov	r1, #448
 	rsb	r1, r1, #0			@y is negative
 	ldr	r2, =sprite_refs
 	add	r2, offset, LSL #2		@find address of correct sprite
@@ -185,9 +185,9 @@ ps_hundreds:
 
 	bpl	ps_hundreds			@continue testing hundreds
 
-	mov	r0, #144			@x and y set manually
+	mov	r0, #80				@x and y set manually
 	rsb	r0, r0, #0			@x is negative
-	mov	r1, #368
+	mov	r1, #448
 	rsb	r1, r1, #0			@y is negative
 	ldr	r2, =sprite_refs
 	add	r2, offset, LSL #2		@find address of correct sprite
@@ -203,9 +203,9 @@ ps_tens:
 
 	bpl	ps_tens				@continue testing tens
 
-	mov	r0, #112			@x and y set manually
+	mov	r0, #48				@x and y set manually
 	rsb	r0, r0, #0			@x is negative
-	mov	r1, #368
+	mov	r1, #448
 	rsb	r1, r1, #0			@y is negative
 	ldr	r2, =sprite_refs
 	add	r2, offset, LSL #2		@find address of correct sprite
@@ -213,9 +213,9 @@ ps_tens:
 	bl	drawSprite			@print correct sprite
 
 ps_ones:
-	mov	r0, #80				@x and y set manually
+	mov	r0, #16				@x and y set manually
 	rsb	r0, r0, #0			@x is negative
-	mov	r1, #368
+	mov	r1, #448
 	rsb	r1, r1, #0			@y is negative
 	ldr	r2, =sprite_refs
 	add	r2, score, LSL #2		@only ones remain in score reg
@@ -227,7 +227,7 @@ ps_ones:
 	.unreq	score
 	pop	{r4, r5, r6, lr}
 	bx	lr
-*/
+
 /******************************************
  * Purpose: to get the x/y value of an image
  * based on the size of the screen
@@ -407,15 +407,15 @@ db_PrintDone:
 	pop	{r4-r10, lr}
 	bx	lr
 
-/*******************************************
- *
- * This needs to be finished editing
- *
- *
- *******************************************/
-.global	drawSprite
+/**************************************************
+ * displays a counter sprite
+ * r0 = x
+ * r1 = y
+ * r2 = sprite address
+**************************************************/
+.global drawSprite
 drawSprite:
-	push	{r4-r10, lr}
+	push	{r4, r5, r6, r7, r8, r9, r10, lr}
 	
 	sAddr	.req	r10
 	colour	.req	r9
@@ -426,49 +426,51 @@ drawSprite:
 	temp	.req	r3
 	offset	.req	r4
 
-	mov	sAddr, r2			@ move the sprite address into sAddr to store
-	mov	r3, sAddr			@ move the address into r3 for function call
+	mov	sAddr, r2			@ r2 has the address of the image to print, save in sAddr
 
-	@bl	getSpriteCoord			@ get the coordinates relative to the board
-	@ return is in r0 - x, r1 - y	
-
-	@ get paddle coordinate realtive to the screen
-	add	colour, sAddr, #8 		@ address of first ascii
-	mov	x, r0	@ store x		@ save the value of x returned from getCoord
-	mov	y, r1	@ store y		@ save the value of y returned from getCoord
+	mov	r3, r2				@ move the image address into r3 to get coordinates
+	bl	getSpriteCoord			@ get the coordinates of the image for printing
+	@ return is in r0 - x, r1 - y
+	
+	add	colour, sAddr, #8 		@ address of first ascii value
+	mov	x, r0	@ store x		@ copy the x value into x
+	mov	y, r1	@ store y		@ copy the y value into y to save
 
 	mov	outCnt, #0 			@ height counter
-spriteOuterLoop:
-	ldr	temp, [sAddr]			@ get the height of the sprite
+ds_outerLoop:
+	ldr	temp, [sAddr, #4]		@ store the screen height in temp
 	cmp	outCnt, temp			@ compare counter with heigth
-	bge	spritePrintDone			@ if the counter reaches the height, terminate
+	bge	ds_done				@ if the pixels for height are done, exit
 
 	mov	inCnt, #0 			@ counter
 	mov	offset, #0			@ offset of x
-spritePrintLoop:
-	ldr	temp, [sAddr, #4]		@ get the width of the paddle
+ds_printLoop:
+	ldr	temp, [sAddr]			@ store the screen width in temp
 	cmp	inCnt, temp			@ compare counter with width
-	bge	spriteFinishRow			@ if the counter reaches the width, terminate
+	bge	ds_finishRow			@ move to next row if current one is done printing
 	
 	@ call pixel draw
-	add	r0, x, offset			@ x + offset
-	mov	r1, y				@ get the y value
-	ldr	r2, [colour]			@ get value of ascii in colour
-	bl	DrawPixel			@ draw the pixel in the (x,y) location	
+	add	r0, x, offset			@ x + offset for function call
+	mov	r1, y				@ move the y value into r1 to pass to function
+	ldr	r2, [colour]			@ get value of ascii at address r9
 
-	add	inCnt, #1			@ increment the loop counter by 1
+	mov 	r3, #0xff000000
+	cmp 	r2, r3		
+	blne	DrawPixel			@ print the pixel		
+
+	add	inCnt, #1			@ increment the inner loop counter
 	add 	offset, #1			@ increment offset by 1
 	add	colour, #4			@ move to next pixel colour (each is a word)
-	b	spritePrintLoop
+	b	ds_printLoop			@ go back to print the next pixel in the row
 
-spriteFinishRow:
-	add	outCnt, #1			@ increment counter
-	ldr	temp, =frameBufferInfo		@ get address of frame buffer to get the width value
-	ldr	temp, [temp, #4]		@ go to the byte containing the width
+ds_finishRow:
+	add	outCnt, #1			@ increment outer loop counter
+	ldr	temp, =frameBufferInfo		@ get the frame buffers address and store in temp
+	ldr	temp, [temp, #4]		@ get the width of the screen to add to x for next row
 	add	x, temp				@ add width of screen 
-	b	spriteOuterLoop
+	b	ds_outerLoop			@ continue back to print the next row of pixels
 	
-spritePrintDone:	
+ds_done:	
 	.unreq	sAddr
 	.unreq	colour
 	.unreq	x
@@ -477,7 +479,7 @@ spritePrintDone:
 	.unreq	inCnt
 	.unreq	temp
 	.unreq	offset
-	pop	{r4-r10, lr}
+	pop	{r4, r5, r6, r7, r8, r9, r10, lr}
 	bx	lr
 
 /******************************************
