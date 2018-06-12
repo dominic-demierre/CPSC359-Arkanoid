@@ -286,7 +286,7 @@ resetGame:
 	str	r1, [r0, #4]			@ save 362 into the y value
 	mov	r1, #16				@ move 16 into r1 for reseting the diameter
 	str	r1, [r0, #8]			@ save 16 into the diameter
-	mov	r1, #8				@ move 8 into r1 for reseting the velocity
+	mov	r1, #4				@ move 8 into r1 for reseting the velocity
 	str	r1, [r0, #12]			@ save 8 into the velocity
 	mov	r1, #0				@ move 0 into r1 for reseting the direction
 	str	r1, [r0, #16]			@ save 0 into the direction
