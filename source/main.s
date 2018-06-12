@@ -27,24 +27,30 @@ frameBufferInfo:
 GpioPtr:
 	.int	0		@ pointer to the address of the GPIO base register
 
+.global winFlag
+winLossFlag:
+	.int	0		@ flag for checking if the game has been won
+
+.global lossFlag
+	.int	0		@ flag for checking if the game has been lost
 
 .global score
-score:	.int 0
+score:	.int 0			@ total score for the game play
 
 .global lives
-lives:	.int 3
+lives:	.int 3			@ total number of lives for the game
 
 
 .align
 .global bricksList
-bricksList:	
+bricksList:			@ brick difficulty and existance array for printing (or not printing) a brick 
 	.int	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1		
 
 .align
 .global brickStart
 brickStart:
 	.int	33
-	.int	160
+	.int	224
 
 .align
 .global purple
