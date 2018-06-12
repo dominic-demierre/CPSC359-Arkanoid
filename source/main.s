@@ -106,28 +106,33 @@ gameLoop:
 	bleq	resetGame			@ if start was pressed, reset the game parameters
 	bleq	main				@ if select was pressed, go back to the main menu
 
-	
-	// will need to clear here
-	ldr	r0, =paddleImage
-	bl	clearPaddle
-	ldr	r0, =ballImage
-	bl	clearBall
-	@ loop of updates and drawing functions 
-	mov	r0, r4
-	bl	updatePaddle
-	bl	updateBall
-	mov	r2, r5
-	bl	drawPaddle
-	bl	drawBall
-	@ delay frames
-	mov	r0, #8000			
-	lsl 	r0, #1				
-	bl	delayMicroseconds		@ frame rate delay
-	
+	@ clear, update the images
+	ldr	r0, =paddleImage		@ load the paddle image for printing the clear paddle
+	bl	clearPaddle			@ clear the paddle image
+	ldr	r0, =ballImage			@ load the address for the ball image
+	bl	clearBall			@ clear the ball image 
+	mov	r0, r4				@ move the button register values into r0 for function call
+	bl	updatePaddle			@ update the paddles x coordinates based on the paddle register
+	bl	updateBall			@ update the ball coordinates based on its interactions
 
+	@ THIS IS WHERE THE TESTING WIN AND LOSS NEEDS TO GO
+	@ after update ball the condition for winning or losing should be checked
+	@ if the player lost and they still have lives, reset the game/startgame
+	@ if the player is out of lives, need to print the losing screen and allow any button to exit
+	@ if the player has won, go to printing the win screen and any button to exit
 	@ create if condition to only reprint the lives and score if they change
 	@bl	printLives			
 	@bl	printScore
+
+	@ redraw the paddle and ball
+	mov	r2, r5				@ move the game background address into r2 
+	bl	drawPaddle			@ draw the paddle
+	bl	drawBall			@ draw the ball
+
+	@ delay frames
+	mov	r0, #6000			@ delay for 6 miliseconds		
+	lsl 	r0, #1				@ multiply by two to get it to 12 milisecond delay
+	bl	delayMicroseconds		@ frame rate delay
 		
 	b	gameLoop
 
@@ -136,8 +141,6 @@ end:
 
 
 
-
-@ eventually move to seperate file
 /*---------------------- FUNCTIONS --------------------*/
 
 /******************************************************
@@ -183,8 +186,8 @@ mainMenu:
 	mov	r5, #0				@ defualt 0 for start screen and 1 for quit selection
 
 	@ start with the start button selected
-	ldr	r2, =splashStart
-	bl	printBacking
+	ldr	r2, =splashStart		@ load the splash start screen
+	bl	printBacking			@ print the screen image
 
 readInLoop:
 	bl	Read_SNES			@ get the input from the SNES paddle
@@ -269,13 +272,14 @@ resetGame:
 	push	{lr}
 	
 	@ reset the paddle:
-	ldr	r0, =paddleImage
-	mov	r1, #0
-	str	r1, [r0]
-	mov	r1, #368
-	str	r1, [r0, #4]
+	ldr	r0, =paddleImage		@ load the paddle image address to edit values
+	mov	r1, #0				@ move 0 into r1 for reseting the x coordinates
+	str	r1, [r0]			@ save 0 into the x value
+	mov	r1, #368			@ move 368 into r1 for reseting the y coordinates
+	str	r1, [r0, #4]			@ save 368 into the y value
 	
 	@ reset the ball:
+<<<<<<< HEAD
 	ldr	r0, =ballImage
 	mov	r1, #0
 	str	r1, [r0]
@@ -287,6 +291,19 @@ resetGame:
 	str	r1, [r0, #12]
 	mov	r1, #0
 	str	r1, [r0, #16]
+=======
+	ldr	r0, =ballImage			@ load the ball image address to edit values
+	mov	r1, #0				@ move 0 into r1 for reseting the x coordinate
+	str	r1, [r0]			@ save 0 into the x value
+	mov	r1, #362			@ move 362 into r1 for reseting the y coordinate 
+	str	r1, [r0, #4]			@ save 362 into the y value
+	mov	r1, #16				@ move 16 into r1 for reseting the diameter
+	str	r1, [r0, #8]			@ save 16 into the diameter
+	mov	r1, #8				@ move 8 into r1 for reseting the velocity
+	str	r1, [r0, #12]			@ save 8 into the velocity
+	mov	r1, #0				@ move 0 into r1 for reseting the direction
+	str	r1, [r0, #16]			@ save 0 into the direction
+>>>>>>> glenn
 
 	@ reset the brick array values
 	//ldr	=bricksList
