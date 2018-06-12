@@ -9,8 +9,7 @@
 
 .sect	.data
 
-/* upper boundary of ball is a little off */
-/* need to try and fix the refresh */
+
 
 .align
 .globl	frameBufferInfo
@@ -34,7 +33,7 @@ lives:	.int 3
 .align
 .global bricksList
 bricksList:	
-	.int	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1		
+	.int	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1		
 
 .align
 .global brickStart
@@ -283,6 +282,10 @@ resetGame:
 	str	r1, [r0, #12]
 	mov	r1, #0
 	str	r1, [r0, #16]
+
+	@ reset the brick array values
+	ldr	=bricksList
+	@ need to figure out a good way to reload all of the values
 	
 	pop	{lr}
 	bx	lr
