@@ -771,14 +771,14 @@ drawBrick:
 	offset	.req	r4
 	
 	mov	value, r2			@ copy the brick value
-	cmp	value, #0			@ see if the brick has been broken
-	beq	brickPrintDone			@ if so don't print this brick
+	@cmp	value, #0			@ see if the brick has been broken
+	@ldreq	sAddr, =purple			@ if so, print the background colour
 	cmp	value, #1			@ see if the brick should be green
-	ldr	sAddr, =greenBrick		@ get the address of the green brick to print 
+	ldreq	sAddr, =greenBrick		@ get the address of the green brick to print 
 	cmp	value, #2			@ see if the brick should be yellow
-	ldr	sAddr, =yellowBrick		@ get the address for the yellow brick
+	ldreq	sAddr, =yellowBrick		@ get the address for the yellow brick
 	cmp	value, #3			@ see if the brick should be red
-	ldr	sAddr, =redBrick		@ get the address for the yellow brick
+	ldreq	sAddr, =redBrick		@ get the address for the yellow brick
 	@ r0 - x, r1 - y
 	bl	getBrickCoord			@ get the coordinates to print the brick
 	mov	x, r0				@ copy the x value over
@@ -800,7 +800,9 @@ brickPrintLoop:
 	@ call pixel draw
 	add	r0, x, offset			@ x + offset
 	mov	r1, y				@ get the y value
-	ldr	r2, [sAddr]			@ get the colour of the pixel
+	cmp	value, #0			@ see if the brick was supposed to be empty
+	ldreq	r2, =0x3B0275
+	ldrne	r2, [sAddr]			@ get the colour of the pixel
 	bl	DrawPixel			@ go print the brick to the screen
 
 	add	inCnt, #1			@ increment the loop counter by 1
@@ -840,41 +842,50 @@ printBricks:
 	
 	@ starts at 32, 160
 	@ need the brick array
-/*
-
+	x	.req	r4			@ the starting y location for printing
+	y	.req	r5			@ the starting x location for printing
+	inCnt	.req	r6			@ width to add to print the next brick
+	outCnt	.req	r7			@ height to add to print the next brick
+	offset	.req	r8			@ width offset per row
+	array	.req	r9			@ brick value array
+	sAddr	.req	r10			@ temporary values
+	
+	ldr	array, =bricksList		@ copy the brick array into array
+	ldr	sAddr, =brickStart		@ get the starting value of x
+	ldr	x, [sAddr]			@ get the value of the y starting location
+	ldr	y, [sAddr, #4]			@ get the value of x
+	
 	mov	outCnt, #0 			@ height counter
 arrayOuterLoop:
-	mov	temp, #32			@ height of the brick for printing
-	cmp	outCnt, temp			@ compare counter with height
+	cmp	outCnt, #3			@ compare counter with height
 	bge	arrayPrintDone			@ if the counter reaches the height, terminate
 
 	mov	inCnt, #0 			@ counter
-	mov	offset, #0			@ offset of x
+	mov	offset, #0			@ offset of the array
 arrayPrintLoop:
-	mov	temp, #64			@ width of the brick
-	cmp	inCnt, temp			@ compare counter with diameter
+	cmp	inCnt, #11			@ compare counter number of bricks per row
 	bge	arrayFinishRow			@ if the counter reaches the width, terminate
 	
-	@ call pixel draw
-	add	r0, x, offset			@ x + offset
-	mov	r1, y				@ get the y value
-	mov	r3, sAddr			@ get the colour of the pixel
-	bl	DrawPixel			@ go print the brick to the screen
+	@ call brick draw
+	mov	r0, x				@ move x to call print brick function
+	mov	r1, y				@ move y to call print brick function
+	ldr	r2, [array]			@ get the next array value for brick strength
+	@r0 - x coordinate, r1 - y coordinate, r2 - brick colour value
+	bl	drawBrick			@ go print the brick to the screen
 
 	add	inCnt, #1			@ increment the loop counter by 1
-	add 	offset, #1			@ increment offset by 1
-	add	sAddr, #4			@ move to next pixel colour (each is a word)
+	add 	array, #4			@ increment offset by 1 for the brick array (bytes)
+	add	x, #64				@ move x forward to the next brick location
 	b	arrayPrintLoop
 
 arrayFinishRow:
 	add	outCnt, #1			@ increment counter
-	ldr	temp, =frameBufferInfo		@ get address of frame buffer to get the width value
-	ldr	temp, [temp, #4]		@ go to the byte containing the width
-	add	x, temp				@ add width of screen 
+	ldr	x, [sAddr]			@ reset x to start next row
+	add	y, #32				@ move the y location up one row
 	b	arrayOuterLoop
 	
 arrayPrintDone:	
-*/
+
 	pop	{r4-r10, lr}
 	bx	lr
 

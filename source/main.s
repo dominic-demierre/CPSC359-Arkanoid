@@ -34,9 +34,18 @@ lives:	.int 3
 .align
 .global bricksList
 bricksList:	
-	.byte	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1		
+	.int	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1		
 
+.align
+.global brickStart
+brickStart:
+	.int	33
+	.int	160
 
+.align
+.global purple
+purple:
+	.int	0x3B0275
 
 /*----------------------- CODE ----------------------*/
 .sect	.data
@@ -62,12 +71,8 @@ startGame:
 	bl	printScore
 	bl	drawPaddle			@ draw the paddle on the scren
 	bl	drawBall			@ draw the ball on the screen
-	ldr	r4, =bricksList			@ get the address of the bricks array
-	mov	r0, #32
-	mov	r1, #160
-	mov	r2, #2
-	//ldr	r2, [r4]
-	bl	drawBrick
+	bl	printBricks			@ print the brick array
+	
 wait:
 	bl	Read_SNES			@ get the input from the SNES paddle
 	ldr	r1, =0xFFFE	
