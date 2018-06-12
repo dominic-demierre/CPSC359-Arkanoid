@@ -110,7 +110,7 @@ done:
  * prints current lives counter
  * takes no arguments, returns nothing
 ******************************************/
-@ Commented out until drawSprite is resolved
+
 .global	printLives
 printLives:
 	push	{lr}
@@ -258,12 +258,11 @@ getCoord:
 	pop	{r4, r5, lr}
 	bx	lr
 
-
 /*******************************************
  *
  *
  *
- *
+ * r0 paddle
  *******************************************/
 .global	drawPaddle
 drawPaddle:
@@ -321,6 +320,78 @@ paddleFinishRow:
 	b	paddleOuterLoop
 	
 paddlePrintDone:	
+	.unreq	sAddr
+	.unreq	colour
+	.unreq	x
+	.unreq	y
+	.unreq	outCnt
+	.unreq	inCnt
+	.unreq	temp
+	.unreq	offset
+	pop	{r4-r10, lr}
+	bx	lr
+/*******************************************
+ *
+ * maybe turn into one function with printPaddle
+ *
+ * r0 - address of object to clear
+ *******************************************/
+.global	clearPaddle
+clearPaddle:
+	push	{r4-r10, lr}
+	
+	sAddr	.req	r10
+	colour	.req	r9
+	x	.req	r5
+	y	.req	r6
+	outCnt	.req	r7
+	inCnt	.req	r8
+	temp	.req	r3
+	offset	.req	r4
+
+	ldr	sAddr, =paddleImage		@ get the paddle address
+	mov	r3, sAddr			@ move the address into r3 for function call
+
+	bl	getPaddleCoord			@ get the coordinates of where to draw the ball relative to the board
+	@ return is in r0 - x, r1 - y	
+
+	@ get paddle coordinate realtive to the screen
+	add	colour, sAddr, #20 		@ address of first ascii
+	mov	x, r0	@ store x		@ save the value of x returned from getCoord
+	mov	y, r1	@ store y		@ save the value of y returned from getCoord
+
+	mov	outCnt, #0 			@ height counter
+clearPaddleOuterLoop:
+	ldr	temp, [sAddr, #12]		@ get the height of the paddle
+	cmp	outCnt, temp			@ compare counter with heigth
+	bge	clearPaddlePrintDone		@ if the counter reaches the height, terminate
+
+	mov	inCnt, #0 			@ counter
+	mov	offset, #0			@ offset of x
+clearPaddlePrintLoop:
+	ldr	temp, [sAddr, #8]		@ get the width of the paddle
+	cmp	inCnt, temp			@ compare counter with width
+	bge	clearPaddleFinishRow			@ if the counter reaches the width, terminate
+	
+	@ call pixel draw
+	add	r0, x, offset			@ x + offset
+	mov	r1, y				@ get the y value
+	ldr	r2, =0x3B0275				@ get value of ascii in colour
+	bl	DrawPixel			@ draw the pixel in the (x,y) location	
+
+	add	inCnt, #1			@ increment the loop counter by 1
+	add 	offset, #1			@ increment offset by 1
+	add	colour, #4			@ move to next pixel colour (each is a word)
+	b	clearPaddlePrintLoop
+
+clearPaddleFinishRow:
+	add	outCnt, #1			@ increment counter
+	ldr	temp, =frameBufferInfo		@ get address of frame buffer to get the width value
+	ldr	temp, [temp, #4]		@ go to the byte containing the width
+	add	x, temp				@ add width of screen 
+	b	clearPaddleOuterLoop
+	
+clearPaddlePrintDone:	
 	.unreq	sAddr
 	.unreq	colour
 	.unreq	x
@@ -406,7 +477,80 @@ db_PrintDone:
 	.unreq	offset
 	pop	{r4-r10, lr}
 	bx	lr
+/****************************************
+ *
+ ****************************************/
+.global	clearBall
+clearBall:
+	push	{r4-r10, lr}
+	
+	sAddr	.req	r10
+	colour	.req	r9
+	x	.req	r5
+	y	.req	r6
+	outCnt	.req	r7
+	inCnt	.req	r8
+	temp	.req	r3
+	offset	.req	r4
 
+	ldr	sAddr, =ballImage		@ get the ball address
+	mov	r3, sAddr			@ move the address into r3 for function call
+
+	bl	getBallCoord			@ get the coordinates of where to draw the ball relative to the board
+	@ return is in r0 - x, r1 - y	
+
+	@ get ball coordinate relative to the screen
+	add	colour, sAddr, #20 		@ address of first ascii
+	mov	x, r0	@ store x		@ save the value of x returned from getCoord
+	mov	y, r1	@ store y		@ save the value of y returned from getCoord
+
+	mov	outCnt, #0 			@ height counter
+
+cb_OuterLoop:
+	ldr	temp, [sAddr, #8]		@ get the diameter of the ball
+	cmp	outCnt, temp			@ compare counter with height
+	bge	cb_PrintDone			@ if the counter reaches the height, terminate
+
+	mov	inCnt, #0 			@ counter
+	mov	offset, #0			@ offset of x
+
+cb_PrintLoop:
+	ldr	temp, [sAddr, #8]		@ get the diameter of the ball
+	cmp	inCnt, temp			@ compare counter with diameter
+	bge	cb_FinishRow			@ if the counter reaches the width, terminate
+	
+	@ call pixel draw
+	add	r0, x, offset			@ x + offset
+	mov	r1, y				@ get the y value
+	ldr	r2, =0x3B0275			@ get value of ascii in colour
+
+	mov 	r3, #0xffffff
+	cmp 	r2, r3
+	blne	DrawPixel
+
+	add	inCnt, #1			@ increment the loop counter by 1
+	add 	offset, #1			@ increment offset by 1
+	add	colour, #4			@ move to next pixel colour (each is a word)
+	b	cb_PrintLoop
+
+cb_FinishRow:
+	add	outCnt, #1			@ increment counter
+	ldr	temp, =frameBufferInfo		@ get address of frame buffer to get the width value
+	ldr	temp, [temp, #4]		@ go to the byte containing the width
+	add	x, temp				@ add width of screen 
+	b	cb_OuterLoop
+	
+cb_PrintDone:	
+	.unreq	sAddr
+	.unreq	colour
+	.unreq	x
+	.unreq	y
+	.unreq	outCnt
+	.unreq	inCnt
+	.unreq	temp
+	.unreq	offset
+	pop	{r4-r10, lr}
+	bx	lr
 /**************************************************
  * displays a counter sprite
  * r0 = x

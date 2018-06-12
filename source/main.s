@@ -89,15 +89,30 @@ gameLoop:
 	bleq	resetGame			@ if start was pressed, reset the game parameters
 	bleq	main				@ if select was pressed, go back to the main menu
 
+	
+	// will need to clear here
+	ldr	r0, =paddleImage
+	bl	clearPaddle
+	ldr	r0, =ballImage
+	bl	clearBall
 	@ loop of updates and drawing functions 
 	mov	r0, r4
 	bl	updatePaddle
 	bl	updateBall
 	mov	r2, r5
-	bl	printBacking
+	//bl	printBacking
 	bl	drawPaddle
-	bl	printLives			@ there is an issue with printLives
 	bl	drawBall
+	@ delay frames
+	mov	r0, #5000			@ value to delay, multiplied by 2
+	lsl 	r0, #1				@ delay is 10 miliseconds
+	bl	delayMicroseconds		@ delay for 10 miliseconds
+	
+
+	@ create if condition to only reprint the lives and score if they change
+	bl	printLives			
+	bl	printScore
+		
 	b	gameLoop
 
 end:
