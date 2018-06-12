@@ -24,16 +24,18 @@ GpioPtr:
 	.int	0		@ pointer to the address of the GPIO base register
 
 
-.global clearBoard
-clearBoard:
-	.int	768		@ width of the clear screen
-	.int	896		@ height of the clear screen
-
 .global score
 score:	.int 0
 
 .global lives
 lives:	.int 3
+
+
+.align
+.global bricksList
+bricksList:	
+	.byte	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1		
+
 
 
 /*----------------------- CODE ----------------------*/
@@ -57,9 +59,15 @@ startGame:
 	mov	r2, r5				@ prepare the background image for function call
 	bl	printBacking			@ print the background image
 	bl	printLives
+	bl	printScore
 	bl	drawPaddle			@ draw the paddle on the scren
 	bl	drawBall			@ draw the ball on the screen
-
+	ldr	r4, =bricksList			@ get the address of the bricks array
+	mov	r0, #32
+	mov	r1, #160
+	mov	r2, #2
+	//ldr	r2, [r4]
+	bl	drawBrick
 wait:
 	bl	Read_SNES			@ get the input from the SNES paddle
 	ldr	r1, =0xFFFE	
@@ -109,8 +117,8 @@ gameLoop:
 	
 
 	@ create if condition to only reprint the lives and score if they change
-	bl	printLives			
-	bl	printScore
+	@bl	printLives			
+	@bl	printScore
 		
 	b	gameLoop
 
