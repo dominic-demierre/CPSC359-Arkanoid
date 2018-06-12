@@ -9,7 +9,12 @@
 
 .sect	.data
 
-
+/* 	THINGS LEFT TO DO:
+	ball still goes off the bottom end
+	ball gets wonky now (didn't used to) on reset of the game
+	need to add in the checks to stop for loss and win
+	need to add collision checking and process for when a brick is destroyed
+*/
 
 .align
 .globl	frameBufferInfo
@@ -274,9 +279,9 @@ resetGame:
 	ldr	r0, =ballImage
 	mov	r1, #0
 	str	r1, [r0]
-	mov	r1, #362
+	mov	r1, #368
 	str	r1, [r0, #4]
-	mov	r1, #16
+	mov	r1, #12
 	str	r1, [r0, #8]
 	mov	r1, #4
 	str	r1, [r0, #12]
@@ -284,7 +289,7 @@ resetGame:
 	str	r1, [r0, #16]
 
 	@ reset the brick array values
-	ldr	=bricksList
+	//ldr	=bricksList
 	@ need to figure out a good way to reload all of the values
 	
 	pop	{lr}
