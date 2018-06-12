@@ -261,7 +261,7 @@ getCoord:
 /*******************************************
  *
  *
- *
+ * could possibly combine some of these print functions into 1
  * r0 paddle
  *******************************************/
 .global	drawPaddle
@@ -450,9 +450,9 @@ db_PrintLoop:
 	mov	r1, y				@ get the y value
 	ldr	r2, [colour]			@ get value of ascii in colour
 
-	mov 	r3, #0xffffffff
-	cmp 	r2, r3
-	blne	DrawPixel
+	mov 	r3, #0xffffffff			@ load colour value to compare
+	cmp 	r2, r3				@ if colour is black, don't print
+	blne	DrawPixel			@ print the pixel
 
 	add	inCnt, #1			@ increment the loop counter by 1
 	add 	offset, #1			@ increment offset by 1
@@ -693,6 +693,9 @@ getBallCoord:
  * r1 = y
  * r3 = sprite address
 ************************************************/
+
+@ need to see if all of these get coord functions can be combined into one
+
 .global getSpriteCoord
 getSpriteCoord:
 	push	{r4, r5, r6, r7, lr}
