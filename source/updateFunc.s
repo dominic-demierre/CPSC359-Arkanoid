@@ -77,31 +77,31 @@ endUpdate:
 updateBall:
 	push	{r4-r6, lr}
 
-	ldr 	r0, =ballImage
+	ldr 	r0, =ballImage			@load address of ball image
 
-	ldr 	r2, [r0]			@get x
-	ldr 	r3, [r0, #4]			@get y
+	ldr 	r2, [r0]			@get x of ball
+	ldr 	r3, [r0, #4]			@get y of ball
 	ldr 	r4, [r0, #12]			@get velocity
 	ldr 	r5, [r0, #16]			@get direction
 
 	@test bit 0 of direction
-	mov 	r6, #1
-	tst	r5, r6
-	subeq 	r0, r2, r4			@bit 0 = 0: left
-	addne	r0, r2, r4			@bit 0 = 1: right
+	mov 	r6, #1				@bitmask for bit 0
+	tst	r5, r6				@compare bits
+	subeq 	r0, r2, r4			@bit 0 = 0: left (subtract velocity from x)
+	addne	r0, r2, r4			@bit 0 = 1: right (add velocity to x)
 
 	@test bit 1 of direction
-	lsl	r6, #1
-	tst	r5, r6
-	subeq	r1, r3, r4			@bit 1 = 0: up
-	addne 	r1, r3, r4			@bit 1 = 1: down
+	lsl	r6, #1				@move bitmask over to bit 1
+	tst	r5, r6				@compare bits
+	subeq	r1, r3, r4			@bit 1 = 0: up (subtract velocity from y)
+	addne 	r1, r3, r4			@bit 1 = 1: down (add velocity to y)
 	
-	bl	testBallCollisions
+	bl	testBallCollisions		@check if this update will cause a collision
 
-	ldr	r3, =ballImage
-	str 	r0, [r3]
-	str 	r1, [r3, #4]
-	str	r2, [r3, #16]
+	ldr	r3, =ballImage			@load address of ball image
+	str 	r0, [r3]			@set adjusted x value in ball
+	str 	r1, [r3, #4]			@set adjusted y value in ball
+	str	r2, [r3, #16]			@set adjusted direction in ball
 
 	pop	{r4-r6, lr}
 	bx	lr
@@ -122,39 +122,39 @@ testBallCollisions:
 	temp	.req	r9
 	edge	.req	r10
 
-	mov	x, r0
-	mov	y, r1
+	mov	x, r0				@store potential x value
+	mov	y, r1				@store potential y value
 	
-	ldr	r0, =ballImage
-	ldr	dia, [r0, #8]
+	ldr	r0, =ballImage			@load address of ball image
+	ldr	dia, [r0, #8]			@get diameter
 	ldr	vel, [r0, #12]			@get velocity
 	ldr	dir, [r0, #16]			@get direction
 
-	ldr	r0, =gameBackground
+	ldr	r0, =gameBackground		@load address of game background
 	ldr	temp, [r0]			@get background width
 	lsr	temp, #1			@cut in half
 	rsb	r2, temp, #0			@get the negative value of the board
-	add	r2, #38				@left border threshold 
-	add	r1, temp, #-38			@right border threshold
+	add	r2, #40				@left border threshold 
+	add	r1, temp, #-40			@right border threshold
 
 	cmp	x, r1				@test x against right border
-	movgt	x, r1
+	movgt	x, r1				@if x is past right border push it back
 	bicgt	dir, dir, #1			@and start moving left
 
 	cmp	x, r2				@test x against left border
-	movlt	x, r2
+	movlt	x, r2				@if x is past left border push it back
 	orrlt	dir, dir, #1			@and start moving right
 
 	ldr	temp, [r0, #4]			@get background height
 	lsr	temp, #1			@cut in half
 	rsb	r1, temp, #0			@get the negative value of the board
-	add	r1, #160			@find top border threshold	
+	add	r1, #90				@find top border threshold	
 
 	cmp	y, r1				@test y against top border
-	movlt	y, r1
+	movlt	y, r1				@if y is past top border push it back
 	orrlt	dir, dir, #2			@and start moving down
 
-	ldr	r0, =paddleImage
+	ldr	r0, =paddleImage		@load address of paddle image
 	ldr	temp, [r0]			@get x of paddle
 	sub	r1, temp, #48			@find left edge of paddle
 	add	r2, temp, #48			@find right edge of paddle
@@ -162,44 +162,44 @@ testBallCollisions:
 	cmp	x, r1				@test lower bound of ball x value
 	moveq	edge, r1			@if ball is touching left edge store its x
 
-	bgt	tbc_checkRange
-	beq	tbc_checkEdge
-	blt	tbc_done 
+	bgt	tbc_checkRange			@if ball is past left edge check x range
+	beq	tbc_checkEdge			@if ball is on left edge check y range
+	blt	tbc_done			@if ball is behind left edge continue
 
 tbc_checkRange:
 	cmp	x, r2				@test upper bound of ball x value
 	moveq	edge, r2			@if ball is touching right edge store its x
 
-	blt	tbc_inRange
-	beq	tbc_checkEdge
-	bgt	tbc_done
+	blt	tbc_inRange			@if ball is behind right edge check y range
+	beq	tbc_checkEdge			@if ball is on right edge check y range
+	bgt	tbc_done			@if ball is past right edge continue
 
 tbc_inRange:
-	mov	r1, #358
+	mov	r1, #360
 
 	cmp	y, r1				@compare y to paddle height
-	movgt	y, r1
-	bicgt	dir, dir, #2			@start moving back up
+	movgt	y, r1				@if y is past top of paddle push it back
+	bicgt	dir, dir, #2			@and start moving back up
 
-	b	tbc_done
+	b	tbc_done			@continue
 
 tbc_checkEdge:
-	mov	r1, #358
-	mov	r2, #386
+	mov	r1, #368
+	mov	r2, #400
 
 	cmp	y, r1				@test lower bound of ball y value
-	bge	tbc_checkEdgeRange
-	blt	tbc_done
+	bge	tbc_checkEdgeRange		@if y is past lower bound check y range
+	blt	tbc_done			@if ball is behind lower bound continue
 
 tbc_checkEdgeRange:
 	cmp	y, r2				@test upper bound of ball y value
-	ble	tbc_onEdge
-	bgt	tbc_done
+	ble	tbc_onEdge			@if y is behind upper bound change direction
+	bgt	tbc_done			@***if y is past lower bound you've lost***
 
 tbc_onEdge:
 	mov	x, edge
-	eor	dir, dir, #1
-	bic	dir, dir, #2
+	eor	dir, dir, #1			@switch horizontal direction
+	bic	dir, dir, #2			@start moving back up
 
 tbc_done:	
 	mov	r0, x

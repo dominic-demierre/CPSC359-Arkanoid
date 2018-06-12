@@ -262,9 +262,9 @@ resetGame:
 	ldr	r0, =ballImage
 	mov	r1, #0
 	str	r1, [r0]
-	mov	r1, #368
+	mov	r1, #362
 	str	r1, [r0, #4]
-	mov	r1, #12
+	mov	r1, #16
 	str	r1, [r0, #8]
 	mov	r1, #4
 	str	r1, [r0, #12]
