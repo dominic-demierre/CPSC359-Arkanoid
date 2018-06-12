@@ -279,19 +279,6 @@ resetGame:
 	str	r1, [r0, #4]			@ save 368 into the y value
 	
 	@ reset the ball:
-<<<<<<< HEAD
-	ldr	r0, =ballImage
-	mov	r1, #0
-	str	r1, [r0]
-	mov	r1, #362
-	str	r1, [r0, #4]
-	mov	r1, #16
-	str	r1, [r0, #8]
-	mov	r1, #4
-	str	r1, [r0, #12]
-	mov	r1, #0
-	str	r1, [r0, #16]
-=======
 	ldr	r0, =ballImage			@ load the ball image address to edit values
 	mov	r1, #0				@ move 0 into r1 for reseting the x coordinate
 	str	r1, [r0]			@ save 0 into the x value
@@ -303,7 +290,6 @@ resetGame:
 	str	r1, [r0, #12]			@ save 8 into the velocity
 	mov	r1, #0				@ move 0 into r1 for reseting the direction
 	str	r1, [r0, #16]			@ save 0 into the direction
->>>>>>> glenn
 
 	@ reset the brick array values
 	//ldr	=bricksList
