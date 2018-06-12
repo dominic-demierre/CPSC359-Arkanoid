@@ -100,13 +100,12 @@ gameLoop:
 	bl	updatePaddle
 	bl	updateBall
 	mov	r2, r5
-	//bl	printBacking
 	bl	drawPaddle
 	bl	drawBall
 	@ delay frames
-	mov	r0, #5000			@ value to delay, multiplied by 2
-	lsl 	r0, #1				@ delay is 10 miliseconds
-	bl	delayMicroseconds		@ delay for 10 miliseconds
+	mov	r0, #8000			
+	lsl 	r0, #1				
+	bl	delayMicroseconds		@ frame rate delay
 	
 
 	@ create if condition to only reprint the lives and score if they change
