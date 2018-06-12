@@ -450,7 +450,7 @@ db_PrintLoop:
 	mov	r1, y				@ get the y value
 	ldr	r2, [colour]			@ get value of ascii in colour
 
-	mov 	r3, #0xffffff
+	mov 	r3, #0xffffffff
 	cmp 	r2, r3
 	blne	DrawPixel
 
