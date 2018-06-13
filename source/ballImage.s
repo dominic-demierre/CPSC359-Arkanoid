@@ -4,7 +4,7 @@
 .global ballImage
 ballImage:
 .int 0			//x
-.int 362		//y
+.int 364		//y
 .int 16			//diameter
 .int 4			//velocity
 .int 0			//direction (00 = up-left, 01 = up-right, 10 = down-left, 11 = down-right)

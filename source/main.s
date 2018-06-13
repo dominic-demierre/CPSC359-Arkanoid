@@ -44,7 +44,7 @@ lives:	.int 3			@ total number of lives for the game
 .align
 .global bricksList
 bricksList:			@ brick difficulty and existance array for printing (or not printing) a brick 
-	.int	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1		
+	.int	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1	
 
 .align
 .global brickStart
@@ -288,14 +288,18 @@ resetGame:
 	ldr	r0, =ballImage			@ load the ball image address to edit values
 	mov	r1, #0				@ move 0 into r1 for reseting the x coordinate
 	str	r1, [r0]			@ save 0 into the x value
-	mov	r1, #362			@ move 362 into r1 for reseting the y coordinate 
-	str	r1, [r0, #4]			@ save 362 into the y value
+	mov	r1, #364			@ move 364 into r1 for reseting the y coordinate 
+	str	r1, [r0, #4]			@ save 364 into the y value
 	mov	r1, #16				@ move 16 into r1 for reseting the diameter
 	str	r1, [r0, #8]			@ save 16 into the diameter
 	mov	r1, #4				@ move 8 into r1 for reseting the velocity
 	str	r1, [r0, #12]			@ save 8 into the velocity
 	mov	r1, #0				@ move 0 into r1 for reseting the direction
 	str	r1, [r0, #16]			@ save 0 into the direction
+
+	ldr	r0, =score
+	mov	r1, #0
+	str	r1, [r0]
 
 	@ reset the brick array values
 	//ldr	=bricksList

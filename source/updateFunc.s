@@ -148,11 +148,17 @@ testBallCollisions:
 	ldr	temp, [r0, #4]			@get background height
 	lsr	temp, #1			@cut in half
 	rsb	r1, temp, #0			@get the negative value of the board
-	add	r1, #90				@find top border threshold	
+	add	r1, #88				@find top border threshold	
 
 	cmp	y, r1				@test y against top border
 	movlt	y, r1				@if y is past top border push it back
 	orrlt	dir, dir, #2			@and start moving down
+
+	mov	r1, #-136			@boundary of green brick row
+	tst	dir, #2				@check if ball is hitting bricks from top/bottom
+	subne	r1, #16				@subtract ball diameter if hitting from top
+	cmp	y, r1				@test y against green row boundary
+	blt	tbc_checkGreenBricks		@if y is past green row boundary check brick presence
 
 	ldr	r0, =paddleImage		@load address of paddle image
 	ldr	temp, [r0]			@get x of paddle
@@ -201,6 +207,78 @@ tbc_onEdge:
 	eor	dir, dir, #1			@switch horizontal direction
 	bic	dir, dir, #2			@start moving back up
 
+	b	tbc_done			@continue
+
+tbc_checkGreenBricks:
+	mov	r1, #-168			@boundary of yellow brick row
+	tst	dir, #2				@check if ball is hitting bricks from top/bottom
+	subne	r1, #16				@subtract ball diameter if hitting from top
+	cmp	y, r1				@test y against row boundary
+	blt	tbc_checkYellowBricks		@if y is past yellow row boundary check brick presence
+
+	add	temp, x, #408			@normalize x of ball
+	lsr	temp, #6			@divide by 64 to get specific brick in row
+	add	temp, #21			@add 21 to get offset in bricksList
+	ldr	r0, =bricksList			@load address of bricksList
+	ldr	r1, [r0, temp, LSL #2]		@load status of concerned brick
+
+	cmp	r1, #0				@check if brick exists
+	bgt	tbc_onBrick			@if brick exists update it
+	beq	tbc_done			@otherwise continue
+
+tbc_checkYellowBricks:
+	mov	r1, #-200			@boundary of red brick row
+	tst	dir, #2				@check if ball is hitting bricks from top/bottom
+	subne	r1, #16				@subtract ball diameter if hitting from top
+	cmp	y, r1				@test y against row boundary
+	ble	tbc_checkRedBricks		@if y is past red row boundary check brick presence
+
+	add	temp, x, #408			@normalize x of ball
+	lsr	temp, #6			@divide by 64 to get specific brick in row
+	add	temp, #10			@add 10 to get offset in bricksList
+	ldr	r0, =bricksList			@load address of bricksList
+	ldr	r1, [r0, temp, LSL #2]		@load status of concerned brick
+
+	cmp	r1, #0				@check if brick exists
+	bgt	tbc_onBrick			@if brick exists update it
+	beq	tbc_done			@otherwise continue
+
+tbc_checkRedBricks:
+	mov	r1, #-232			@boundary past bricks
+	tst	dir, #2				@check if ball is hitting bricks from top/bottom
+	subne	r1, #16				@subtract ball diameter if hitting from top
+	cmp	y, r1				@test y against boundary
+	blt	tbc_done			@if y is past brick boundary continue
+
+	add	temp, x, #408			@normalize x of ball
+	lsr	temp, #6			@divide by 64 to get specific brick in row
+	sub	temp, #1			@subtract 1 to get offset in bricksList
+	ldr	r0, =bricksList			@load address of bricksList
+	ldr	r1, [r0, temp, LSL #2]		@load status of concerned brick
+
+	cmp	r1, #0				@check if brick exists
+	beq	tbc_done			@if not continue
+
+tbc_onBrick:
+	sub	r1, #1				@subtract 1 from brick status
+	str	r1, [r0, temp, LSL #2]		@store updated brick status
+
+	tst	dir, #2				@check if ball hit bricks from top or bottom
+	subne	y, vel				@if ball hit from top subtract velocity from x
+	addeq	y, vel				@if ball hit from bottom add velocity to x
+
+	eor	dir, dir, #2			@swap vertical direction
+	
+	ldr	r0, =score			@load address of score
+	ldr	r2, [r0]			@load score
+	mov	r3, #50				@r3 = 50
+	add	r2, r3, LSL r1			@add 50 * 2^(updated brick status) to score
+	str	r2, [r0]			@store updated score
+
+	bl	clearScore
+	bl	printScore
+	bl	printBricks
+
 tbc_done:	
 	mov	r0, x
 	mov 	r1, y
@@ -214,5 +292,6 @@ tbc_done:
 	.unreq	edge
 	pop	{r4-r10, lr}
 	bx	lr
+	
 
 .end
