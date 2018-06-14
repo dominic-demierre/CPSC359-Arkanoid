@@ -9,13 +9,6 @@
 
 .sect	.data
 
-/* 	THINGS LEFT TO DO:
-	ball still goes off the bottom end
-	ball gets wonky now (didn't used to) on reset of the game
-	need to add in the checks to stop for loss and win
-	need to add collision checking and process for when a brick is destroyed
-*/
-
 .align
 .globl	frameBufferInfo
 frameBufferInfo:
@@ -35,43 +28,52 @@ winFlag:
 lossFlag:
 	.int	0		@ flag for checking if the game has been lost
 
+.global	oobFlag
+oobFlag:
+	.int	0		@flag for checking if ball is out of bounds
+
 .global score
 score:	.int 0			@ total score for the game play
 
 .global lives
-lives:	.int 3			@ total number of lives for the game
+lives:	.int 0			@ total number of lives for the game
 
-
-.align
 .global bricksList
 bricksList:			@ brick difficulty and existance array for printing (or not printing) a brick 
 	.int	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
-.align
 .global brickStart
 brickStart:
 	.int	33
 	.int	224
 
-.align
 .global purple
 purple:
 	.int	0x3B0275
 
-.align
 .global clear
 clear:
 	.int	768		@ width of the screen to print
 	.int	896		@ height of the screen to print
 	.int	0		@ load the background to be black 
 
-
 /*----------------------- CODE ----------------------*/
-.sect	.data
+.sect	.text
 .global	main
 
 main:
 	bl	setup				@ set up all buffers for the game proccesses
+
+	mov	r1, #0
+	ldr	r0, =winFlag
+	str	r1, [r0]			@reset win flag
+	ldr	r0, =lossFlag
+	str	r1, [r0]			@reset loss flag
+
+	mov	r1, #3
+	ldr	r0, =lives
+	str	r1, [r0]			@reset number of lives
+
 	@ print the starting screen		
 
 	@ get user input to determine mode
@@ -98,8 +100,8 @@ wait:
 	teq	r0, r1				@ test to see if the B button has been pressed to start
 	beq	gameLoop			@ if the B button was pressed, start the game
 	bne	wait				@ while the input is not B, keep waiting
+
 gameLoop:
-				
 	bl	Read_SNES			@ get the input from the SNES paddle	
 	mov	r4, r0	
 
@@ -109,18 +111,22 @@ gameLoop:
 	and	r2, r2, r1			@ extract the bit for start
 	lsr	r2, #3				@ shift the bit for testing if on for start
 	teq	r2, #1				@ see if bit is turned on
-	bleq	resetGame			@ if start was pressed, reset the game parameters
-	bleq	startGame			@ go back to the start of the game
+	bne	start_cont			@ if start is not pressed, continue
+	bl	resetGame			@ if start was pressed, reset the game parameters
+	bl	startGame			@ go back to the start of the game
 
+start_cont:
 	@select button
 	mvn	r1, r0				@ get the compliment of r0
 	mov	r2, #0x4			@ for seeing if select was pressed
 	and	r2, r2, r1			@ extract the bit for select
 	lsr	r2, #2				@ shift the bit for testing if on for select
 	teq	r2, #1				@ see if bit is turned on
-	bleq	resetGame			@ if start was pressed, reset the game parameters
-	bleq	main				@ if select was pressed, go back to the main menu
+	bne	sel_cont			@ if select is not pressed, continue
+	bl	resetGame			@ if start was pressed, reset the game parameters
+	b	main				@ if select was pressed, go back to the main menu
 
+sel_cont:
 	@ clear, update the images
 	ldr	r0, =paddleImage		@ load the paddle image for printing the clear paddle
 	bl	clearPaddle			@ clear the paddle image
@@ -131,17 +137,30 @@ gameLoop:
 	bl	updateBall			@ update the ball coordinates based on its interactions
 
 	@ THIS IS WHERE THE TESTING WIN AND LOSS NEEDS TO GO
-	ldr	r1, =winFlag			@ get the win flag for checking
+	ldr	r1, =winFlag			@ load address of loss flag
+	ldr	r1, [r1]			@ get the win flag for checking
 	cmp	r1, #1				@ see if the win flag was set
-	beq	gameOver			@ if so go to game over
-	ldr	r1, =lossFlag			@ get the loss flag for checking
-	cmp	r1, #1				@ check to see if the flag was set
-	@ might need to compare also lives here, not sure (depends how you want to implement it)
+	bleq	gameOver			@ if so go to game over
 
-	beq	gameOver			@ if so go to game over
+	ldr	r1, =lossFlag			@ load address of loss flag
+	ldr	r1, [r1]			@ get the loss flag for checking
+	cmp	r1, #1				@ check to see if the flag was set
+	bleq	gameOver			@ if so go to game over
+
 	cmp	r0, #1				@ check to make sure gameOver was valid
-	beq	main				@ if so go back to the main screen
-	
+	bne	go_cont
+	bl	resetGame
+	b	main				@ if so go back to the main screen
+
+go_cont:
+	ldr	r0, =oobFlag			@load address of out of bounds flag
+	ldr	r0, [r0]			@load out of bounds flag
+	cmp	r0, #1				@check if player went out of bounds
+	bne	oob_cont			@if player is not out of bounds, continue
+	bl	resetGame			@if player went out of bounds then reset game state
+	bl	startGame			@and reset gameplay
+
+oob_cont:	
 	@ redraw the paddle and ball
 	mov	r2, r5				@ move the game background address into r2 
 	bl	drawPaddle			@ draw the paddle
@@ -158,8 +177,6 @@ end:
 	ldr	r2, =clear			@ call the label with the clear screen parameters
 	bl	clearBacking			@ print the background image
 	bl	exit				@ terminate the program
-
-
 
 /*---------------------- FUNCTIONS --------------------*/
 
@@ -201,19 +218,28 @@ setup:
  * return value will be 1 for going to main menu or 0 to quit
  ******************************************************/
 mainMenu:	
-	push	{r4, r5, lr}
+	push	{r4, r5, r6, lr}
 	
 	mov	r5, #0				@ defualt 0 for start screen and 1 for quit selection
+	mov	r6, #0				@assume player not already holding a button
 
 	@ start with the start button selected
 	ldr	r2, =splashStart		@ load the splash start screen
 	bl	printBacking			@ print the screen image
 
+	mov	r1, #0xFFFF			@mask to check if player is already holding a button
+	teq	r0, r1				@test to see if player is already holding a button
+	movne	r6, #1				@set flag to indicate button still being held
+
 readInLoop:
 	bl	Read_SNES			@ get the input from the SNES paddle
 	mov	r1, #0xFFFF			@ mask to check if a button was pushed or not
 	teq	r0, r1				@ test to see if a button was pushed
-	beq	readInLoop			@ if not go back and wait until it one is pushed
+	moveq	r6, #0				@ if no button being pushed reset flag
+	beq	readInLoop			@ then go back and wait until it one is pushed
+
+	teq	r6, #1				@check if player is already holding a button
+	beq	readInLoop			@if player is already holding a button ignore input
 	
 btnPressed:
 	@ r0 contains the buttons pressed
@@ -280,7 +306,7 @@ readOutLoop:
 	b	readInLoop			@ loop back to get input
 	
 endMainLoop:
-	pop	{r4, r5, lr}
+	pop	{r4, r5, r6, lr}
 	bx	lr
 
 /******************************************************
@@ -311,29 +337,54 @@ resetGame:
 	mov	r1, #0				@ move 0 into r1 for reseting the direction
 	str	r1, [r0, #16]			@ save 0 into the direction
 
-	ldr	r0, =score
-	mov	r1, #0
-	str	r1, [r0]
+	ldr	r0, =score			@load score address
+	mov	r1, #0				@reset score to 0
+	str	r1, [r0]			@store back into score
 
-	@ reset the brick array values
-	ldr	r0, =bricksList			@ get the brick list to refresh
-	mov	r1, #33				@ total number of bricks
-loadLoop:
-	cmp	r1, #22				@ see if value to print should be 3
-	movgt	r2, #3				@ move 3 in to load the array
-	cmp	r1, #11				@ see if the value to print should be 2
-	movgt	r2, #2				@ move 2 in to load the array
-	cmp	r1, #0				@ see if the value to print should be 1
-	movgt	r2, #1				@ move 1 in to load the array	
-	str	r2, [r0, r3]			@ load value back into the array
-	add	r0, #4				@ increment the array forward by a word
-	sub	r1, #1				@ decrement the total
-	cmp	r1, #0				@ if all the elements have been loaded, terminate		
-	bne	loadLoop			@ if not done looping through, go back
+	ldr	r0, =oobFlag			@load out of bounds flag address
+	mov	r1, #0				@reset flag to 0
+	str	r1, [r0]			@store back into flag
 
+	bl	resetBricks			@reset all bricks
+	
 	pop	{lr}
 	bx	lr
+
+/******************************************************
+ * Purpose: To reset every individual brick
+ *
+ *
+ ******************************************************/
+resetBricks:
+	push	{lr}
+
+	ldr	r0, =bricksList			@load address of brick list
+
+	mov	r1, #3				@set row number to 0
+	mov	r2, #0				@set brick number to 0
+	mov	r3, #0				@set i to 0
 	
+rb_outerLoop:
+	mov	r3, #0				@reset i
+	cmp	r1, #1				@compare row number to 1
+	blt	rb_done				@if row number is less than 1, break
+
+rb_innerLoop:
+	str	r1, [r0, r2, LSL #2]		@set current brick to row number
+	add	r2, #1				@increment brick number
+	add	r3, #1				@increment i
+	
+	cmp	r3, #11				@compare i to 11
+	blt	rb_innerLoop			@if i < 11, continue inner loop
+
+rb_outerBody:
+	sub	r1, #1				@decrement row number
+	b	rb_outerLoop			@continue outer loop
+
+rb_done:
+	pop	{lr}
+	bx	lr
+
 /******************************************************
  * Purpose: To end the game
  *
@@ -343,17 +394,20 @@ gameOver:
 	push	{lr}
 
 	ldr	r0, =winFlag			@ get the game ending flag
+	ldr	r0, [r0]
 	cmp	r0, #1				@ see if game won is action
-	beq	drawWinLoss			@ call winLoss function with r0 = 1 for win game
-	ldr	r0, =lossFlag			@ if win wasnt called, check and make sure loss was 
+	bleq	drawWinLoss			@ call winLoss function with r0 = 1 for win game
+
+	ldr	r0, =lossFlag			@ if win wasnt called, check and make sure loss was
+	ldr	r0, [r0]
 	cmp	r0, #1				@ check to validate that this is true
 	moveq	r0, #0				@ if true, load the value for printing the loss game message
-	beq	drawWinLoss			@ call winLoss function with r0 = 0 for loss game
+	bleq	drawWinLoss			@ call winLoss function with r0 = 0 for loss game
 
 getInput:
 	bl	Read_SNES			@ get the input from the SNES paddle
 	ldr	r1, =0xFFFF	
-	teq	r0, r1				@ test to see if any button was pressed
+	cmp	r0, r1				@ test to see if any button was pressed
 	bne	endGameOverInput		@ exit function if a button was pressed
 	beq	getInput			@ loop back if no input yet
 	
@@ -366,5 +420,3 @@ endGameOverInput:
 /************************************************************/
 
 .end
-
-

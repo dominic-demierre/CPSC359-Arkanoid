@@ -65,12 +65,15 @@ testPaddleCollisions:
  	@ if their are no collisions, update the displacement
 	str	r6, [r4]			@ load the new displacement back into the paddle image
 
-endUpdate:	
+endUpdate:
 	
 	pop	{r4-r6, lr}
 	bx	lr
 	
 /*********************************
+ * Purpose: to update x and y coordinates
+ * of ball based on current direction
+ *
  * takes no arguments and returns nothing
  *********************************/
 .global	updateBall
@@ -103,13 +106,42 @@ updateBall:
 	str 	r1, [r3, #4]			@set adjusted y value in ball
 	str	r2, [r3, #16]			@set adjusted direction in ball
 
+	cmp	r1, #408			@check if ball y is past lower y bound of paddle
+	blt	ub_done
+
+ub_outofBounds:
+	ldr	r3, =oobFlag			@if it is, load address of out of bounds flag
+	mov	r0, #1				@set it to 1
+	str	r0, [r3]			@and store updated value of flag
+
+	ldr	r3, =lives			@load address of lives number
+	ldr	r0, [r3]			@load number of lives
+
+	cmp	r0, #0				@check if player is out of lives
+	ldreq	r2, =lossFlag			@if player's lives are 0, load address of game loss flag
+	moveq	r1, #1				@set it to 1
+	streq	r1, [r2]			@and store updated value of flag
+	beq	ub_done				@then continue
+	
+	sub	r0, #1				@otherwise subtract one from number of lives
+	str	r0, [r3]			@and store updated number of lives
+
+	bl	clearLives
+
+ub_done:
 	pop	{r4-r6, lr}
 	bx	lr
 
 /******************************************
- * Will need to add brick checking function too
+ * Purpose: to check if the ball's potential 
+ * x and y values will cause collisions with 
+ * other game objects
  * 
- * 
+ * arguments:
+ * r0 = x, r1 = y
+ *
+ * returns:
+ * r0 = x, r1 = y, r2 = updated direction
  ******************************************/
 testBallCollisions:
 	push	{r4-r10, lr}
@@ -266,7 +298,6 @@ tbc_onBrick:
 	tst	dir, #2				@check if ball hit bricks from top or bottom
 	subne	y, vel				@if ball hit from top subtract velocity from x
 	addeq	y, vel				@if ball hit from bottom add velocity to x
-
 	eor	dir, dir, #2			@swap vertical direction
 	
 	ldr	r0, =score			@load address of score
@@ -278,6 +309,13 @@ tbc_onBrick:
 	bl	clearScore
 	bl	printScore
 	bl	printBricks
+
+	bl	checkRemainingBricks		@check if any bricks still remain
+	cmp	r0, #0				@compare result to 0
+	bgt	tbc_done			@if result > 0, continue
+	ldr	r0, =winFlag			@load address of win flag
+	mov	r1, #1				@set win flag to 1
+	str	r1, [r0]			@store updated value of win flag
 
 tbc_done:	
 	mov	r0, x
@@ -292,6 +330,39 @@ tbc_done:
 	.unreq	edge
 	pop	{r4-r10, lr}
 	bx	lr
-	
+
+/******************************************
+ * Purpose: to check if there are any
+ * bricks left on screen
+ * 
+ * takes no arguments
+ *
+ * returns:
+ * r0 = flag (0: none left, 1: some left)
+ ******************************************/
+checkRemainingBricks:
+	push	{lr}
+
+	mov	r0, #0				@assume there are no bricks remaining
+	ldr	r1, =bricksList			@load address of brick list
+	mov	r2, #0				@start at brick 0
+
+cbr_loop:
+	cmp	r2, #33				@compare brick index to 33
+	bge	cbr_done			@if brick index >= 33, break
+
+	ldr	r3, [r1, r2, LSL #2]		@load current brick
+	cmp	r3, #1				@check if current brick exists
+	bge	cbr_someleft			@if current brick exists, set flag
+
+	add	r2, #1				@increment index
+	b	cbr_loop			@continue loop
+
+cbr_someleft:
+	mov	r0, #1				@set flag to 1
+
+cbr_done:
+	pop	{lr}
+	bx	lr
 
 .end

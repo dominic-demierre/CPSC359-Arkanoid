@@ -259,6 +259,18 @@ clearScore:
 	pop	{lr}
 	bx	lr
 
+.global	clearLives
+clearLives:
+	push {lr}
+
+	mov	r0, #304
+	mov	r1, #448
+	rsb	r1, r1, #0
+	bl	clearSprite
+
+	pop	{lr}
+	bx	lr
+
 /******************************************
  * Purpose: to get the x/y value of an image
  * based on the size of the screen
