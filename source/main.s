@@ -136,7 +136,7 @@ sel_cont:
 	bl	updatePaddle			@ update the paddles x coordinates based on the paddle register
 	bl	updateBall			@ update the ball coordinates based on its interactions
 
-	@ THIS IS WHERE THE TESTING WIN AND LOSS NEEDS TO GO
+	@ check the state of the game for wins and losses
 	ldr	r1, =winFlag			@ load address of loss flag
 	ldr	r1, [r1]			@ get the win flag for checking
 	cmp	r1, #1				@ see if the win flag was set
@@ -157,7 +157,7 @@ go_cont:
 	ldr	r0, [r0]			@load out of bounds flag
 	cmp	r0, #1				@check if player went out of bounds
 	bne	oob_cont			@if player is not out of bounds, continue
-	bl	resetGame			@if player went out of bounds then reset game state
+	bl	refreshGame			@if player went out of bounds then reset game state
 	bl	startGame			@and reset gameplay
 
 oob_cont:	
@@ -349,6 +349,43 @@ resetGame:
 	
 	pop	{lr}
 	bx	lr
+
+/******************************************************
+ * Purpose: To reset the ball and paddle positions
+ *
+ *
+ ******************************************************/
+refreshGame:
+	push	{lr}
+	
+	@ reset the paddle:
+	ldr	r0, =paddleImage		@ load the paddle image address to edit values
+	mov	r1, #0				@ move 0 into r1 for reseting the x coordinates
+	str	r1, [r0]			@ save 0 into the x value
+	mov	r1, #368			@ move 368 into r1 for reseting the y coordinates
+	str	r1, [r0, #4]			@ save 368 into the y value
+	
+	@ reset the ball:
+	ldr	r0, =ballImage			@ load the ball image address to edit values
+	mov	r1, #0				@ move 0 into r1 for reseting the x coordinate
+	str	r1, [r0]			@ save 0 into the x value
+	mov	r1, #364			@ move 364 into r1 for reseting the y coordinate 
+	str	r1, [r0, #4]			@ save 364 into the y value
+	mov	r1, #16				@ move 16 into r1 for reseting the diameter
+	str	r1, [r0, #8]			@ save 16 into the diameter
+	mov	r1, #4				@ move 8 into r1 for reseting the velocity
+	str	r1, [r0, #12]			@ save 8 into the velocity
+	mov	r1, #0				@ move 0 into r1 for reseting the direction
+	str	r1, [r0, #16]			@ save 0 into the direction
+
+	ldr	r0, =oobFlag			@load out of bounds flag address
+	mov	r1, #0				@reset flag to 0
+	str	r1, [r0]			@store back into flag
+
+	pop	{lr}
+	bx	lr
+
+
 
 /******************************************************
  * Purpose: To reset every individual brick
