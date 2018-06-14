@@ -28,10 +28,11 @@ GpioPtr:
 	.int	0		@ pointer to the address of the GPIO base register
 
 .global winFlag
-winLossFlag:
+winFlag:
 	.int	0		@ flag for checking if the game has been won
 
 .global lossFlag
+lossFlag:
 	.int	0		@ flag for checking if the game has been lost
 
 .global score
@@ -44,7 +45,7 @@ lives:	.int 3			@ total number of lives for the game
 .align
 .global bricksList
 bricksList:			@ brick difficulty and existance array for printing (or not printing) a brick 
-	.int	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1	
+	.int	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
 .align
 .global brickStart
@@ -56,6 +57,14 @@ brickStart:
 .global purple
 purple:
 	.int	0x3B0275
+
+.align
+.global clear
+clear:
+	.int	768		@ width of the screen to print
+	.int	896		@ height of the screen to print
+	.int	0		@ load the background to be black 
+
 
 /*----------------------- CODE ----------------------*/
 .sect	.data
@@ -72,7 +81,7 @@ main:
 	cmp	r0, #0				@ if the function mainMenu returned 0, terminate the program
 	beq	end				@ exit the program, will need to write a blank screen
 	bne	startGame			@ if function returned 1, go on to the game loop
-
+	
 startGame:
 	ldr	r5, =gameBackground
 	mov	r2, r5				@ prepare the background image for function call
@@ -122,27 +131,32 @@ gameLoop:
 	bl	updateBall			@ update the ball coordinates based on its interactions
 
 	@ THIS IS WHERE THE TESTING WIN AND LOSS NEEDS TO GO
-	@ after update ball the condition for winning or losing should be checked
-	@ if the player lost and they still have lives, reset the game/startgame
-	@ if the player is out of lives, need to print the losing screen and allow any button to exit
-	@ if the player has won, go to printing the win screen and any button to exit
-	@ create if condition to only reprint the lives and score if they change
-	@bl	printLives			
-	@bl	printScore
+	ldr	r1, =winFlag			@ get the win flag for checking
+	cmp	r1, #1				@ see if the win flag was set
+	beq	gameOver			@ if so go to game over
+	ldr	r1, =lossFlag			@ get the loss flag for checking
+	cmp	r1, #1				@ check to see if the flag was set
+	@ might need to compare also lives here, not sure (depends how you want to implement it)
 
+	beq	gameOver			@ if so go to game over
+	cmp	r0, #1				@ check to make sure gameOver was valid
+	beq	main				@ if so go back to the main screen
+	
 	@ redraw the paddle and ball
 	mov	r2, r5				@ move the game background address into r2 
 	bl	drawPaddle			@ draw the paddle
 	bl	drawBall			@ draw the ball
 
 	@ delay frames
-	mov	r0, #6000			@ delay for 6 miliseconds		
+	mov	r0, #5000			@ delay for 6 miliseconds		
 	lsl 	r0, #1				@ multiply by two to get it to 12 milisecond delay
 	bl	delayMicroseconds		@ frame rate delay
 		
 	b	gameLoop
 
 end:
+	ldr	r2, =clear			@ call the label with the clear screen parameters
+	bl	clearBacking			@ print the background image
 	bl	exit				@ terminate the program
 
 
@@ -302,13 +316,54 @@ resetGame:
 	str	r1, [r0]
 
 	@ reset the brick array values
-	//ldr	=bricksList
-	@ need to figure out a good way to reload all of the values
-	
+	ldr	r0, =bricksList			@ get the brick list to refresh
+	mov	r1, #33				@ total number of bricks
+loadLoop:
+	cmp	r1, #22				@ see if value to print should be 3
+	movgt	r2, #3				@ move 3 in to load the array
+	cmp	r1, #11				@ see if the value to print should be 2
+	movgt	r2, #2				@ move 2 in to load the array
+	cmp	r1, #0				@ see if the value to print should be 1
+	movgt	r2, #1				@ move 1 in to load the array	
+	str	r2, [r0, r3]			@ load value back into the array
+	add	r0, #4				@ increment the array forward by a word
+	sub	r1, #1				@ decrement the total
+	cmp	r1, #0				@ if all the elements have been loaded, terminate		
+	bne	loadLoop			@ if not done looping through, go back
+
 	pop	{lr}
 	bx	lr
 	
+/******************************************************
+ * Purpose: To end the game
+ *
+ *
+ ******************************************************/
+gameOver:
+	push	{lr}
 
+	ldr	r0, =winFlag			@ get the game ending flag
+	cmp	r0, #1				@ see if game won is action
+	beq	drawWinLoss			@ call winLoss function with r0 = 1 for win game
+	ldr	r0, =lossFlag			@ if win wasnt called, check and make sure loss was 
+	cmp	r0, #1				@ check to validate that this is true
+	moveq	r0, #0				@ if true, load the value for printing the loss game message
+	beq	drawWinLoss			@ call winLoss function with r0 = 0 for loss game
+
+getInput:
+	bl	Read_SNES			@ get the input from the SNES paddle
+	ldr	r1, =0xFFFF	
+	teq	r0, r1				@ test to see if any button was pressed
+	bne	endGameOverInput		@ exit function if a button was pressed
+	beq	getInput			@ loop back if no input yet
+	
+endGameOverInput:
+	mov	r0, #1				@ load 1 in r0 to signify the game is indeed over
+
+	pop	{lr}
+	bx	lr				@ return to calling function
+
+/************************************************************/
 
 .end
 
