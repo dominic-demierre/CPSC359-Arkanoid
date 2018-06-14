@@ -1,5 +1,6 @@
 /*****************************************************
  * CPSC 359 Assignment 2, Arkanoid
+ * Creators:
  * Dominic Demierre, Maha Asim, 
  * Jessica Pelley, Glenn Skelton
  *
@@ -57,16 +58,19 @@ clear:
 	.int	896				@ height of the screen to print
 	.int	0				@ load the background to be black 
 
-/*----------------------- CODE ----------------------*/
+
+/*------------------------- CODE ------------------------*/
 .sect	.text
 .global	main
 
-/*********************************************************
- * Purpose: To run the main game loop of the game Arkanoid
+/**********************************************************
+ * Purpose: To run the main game loop of the game Arkanoid.
+ * To win the game, all of the bricks must be broken. If 
+ * the player loses all of their lives, they lose the game.
+ * Param: None
+ * Return: None
  *
- *
- *
- *********************************************************/
+ **********************************************************/
 
 main:
 	bl	setup				@ set up all buffers for the game proccesses
@@ -133,9 +137,9 @@ start_cont:
 
 sel_cont:
 	@ clear, update the images
-	ldr	r0, =paddleImage		@ load the paddle image for printing the clear paddle
+	@ldr	r0, =paddleImage		@ load the paddle image for printing the clear paddle
 	bl	clearPaddle			@ clear the paddle image
-	ldr	r0, =ballImage			@ load the address for the ball image
+	@ldr	r0, =ballImage			@ load the address for the ball image
 	bl	clearBall			@ clear the ball image 
 	mov	r0, r4				@ move the button register values into r0 for function call
 	bl	updatePaddle			@ update the paddles x coordinates based on the paddle register
@@ -158,12 +162,12 @@ sel_cont:
 	b	main				@ if so go back to the main screen
 
 go_cont:
-	ldr	r0, =oobFlag			@load address of out of bounds flag
-	ldr	r0, [r0]			@load out of bounds flag
-	cmp	r0, #1				@check if player went out of bounds
-	bne	oob_cont			@if player is not out of bounds, continue
-	bl	refreshGame			@if player went out of bounds then reset game state
-	bl	startGame			@and reset gameplay
+	ldr	r0, =oobFlag			@ load address of out of bounds flag
+	ldr	r0, [r0]			@ load out of bounds flag
+	cmp	r0, #1				@ check if player went out of bounds
+	bne	oob_cont			@ if player is not out of bounds, continue
+	bl	refreshGame			@ if player went out of bounds then reset game state
+	bl	startGame			@ and reset gameplay
 
 oob_cont:	
 	@ redraw the paddle and ball
@@ -187,10 +191,10 @@ end:
 
 /******************************************************
  * Purpose: Setup GPIO register, pins and framebuffer
- * Pre:
- * Post:
- * Param:
- * Return:
+ * Pre: There is a label storing the frameBuffer .
+ * Post: The address for the frame buffer is loaded.
+ * Param: None
+ * Return: None
  *
  ******************************************************/
 setup:
@@ -217,16 +221,16 @@ setup:
 	pop	{lr}
 	bx	lr
 
-/******************************************************
- * Purpose: Main menu loop ,call mainMenu function to wait for user input to start or exit
- * Pre:
- * Post:
- * Param:
- * Return:
- * check to see if up or down is pressed or A to go onto game loop
- * if nothing keep polling for input
- * return value will be 1 for going to main menu or 0 to quit
- ******************************************************/
+/********************************************************
+ * Purpose: To run the main menu loop for starting or
+ * quiting the game
+ * Pre: The game has been instansiated
+ * Post: The game will either start or quit depending on
+ * the user input
+ * Param: None
+ * Return: 0 if the user selects quit or 1 if they select
+ * start.
+ ********************************************************/
 mainMenu:	
 	push	{r4-r6, lr}
 	
@@ -320,11 +324,12 @@ endMainLoop:
 	bx	lr
 
 /******************************************************
- * Purpose: To reset the ball and paddle positions
- * Pre
- * Post:
- * Param:
- * Return:
+ * Purpose: To reset the ball and paddle and brick
+ * positions.
+ * Pre: The game has been started
+ * Post: The ball variables will be reset in the label
+ * Param: None
+ * Return: None
  *
  ******************************************************/
 resetGame:
@@ -369,10 +374,11 @@ resetGame:
 
 /******************************************************
  * Purpose: To reset the ball and paddle positions
- * Pre:
- * Post:
- * Param:
- * Return:
+ * Pre: The game has been started
+ * Post: Only the paddle and ball will be reset so that
+ * the user can continue game play
+ * Param: None
+ * Return: None
  *
  ******************************************************/
 refreshGame:
@@ -398,48 +404,49 @@ refreshGame:
 	mov	r1, #0				@ move 0 into r1 for reseting the direction
 	str	r1, [r0, #16]			@ save 0 into the direction
 
-	ldr	r0, =oobFlag			@load out of bounds flag address
-	mov	r1, #0				@reset flag to 0
-	str	r1, [r0]			@store back into flag
+	ldr	r0, =oobFlag			@ load out of bounds flag address
+	mov	r1, #0				@ reset flag to 0
+	str	r1, [r0]			@ store back into flag
 
 	pop	{lr}
 	bx	lr
 
 
 
-/******************************************************
+/*********************************************************
  * Purpose: To reset every individual brick
- * Pre:
- * Post:
- * Param:
- * Return:
+ * Pre: The bricks varaible exists
+ * Post: The values in the brick variable will be returned
+ * back to their starting state.
+ * Param: None
+ * Return: None
  *
- ******************************************************/
+ *********************************************************/
 resetBricks:
 	push	{lr}
 
-	ldr	r0, =bricksList			@load address of brick list
+	ldr	r0, =bricksList			@ load address of brick list
 
-	mov	r1, #3				@set row number to 0
-	mov	r2, #0				@set brick number to 0
-	mov	r3, #0				@set i to 0
+	mov	r1, #3				@ set row number to 0
+	mov	r2, #0				@ set brick number to 0
+	mov	r3, #0				@ set i to 0
 	
 rb_outerLoop:
-	mov	r3, #0				@reset i
-	cmp	r1, #1				@compare row number to 1
-	blt	rb_done				@if row number is less than 1, break
+	mov	r3, #0				@ reset i
+	cmp	r1, #1				@ compare row number to 1
+	blt	rb_done				@ if row number is less than 1, break
 
 rb_innerLoop:
-	str	r1, [r0, r2, LSL #2]		@set current brick to row number
-	add	r2, #1				@increment brick number
-	add	r3, #1				@increment i
+	str	r1, [r0, r2, LSL #2]		@ set current brick to row number
+	add	r2, #1				@ increment brick number
+	add	r3, #1				@ increment i
 	
-	cmp	r3, #11				@compare i to 11
-	blt	rb_innerLoop			@if i < 11, continue inner loop
+	cmp	r3, #11				@ compare i to 11
+	blt	rb_innerLoop			@ if i < 11, continue inner loop
 
 rb_outerBody:
-	sub	r1, #1				@decrement row number
-	b	rb_outerLoop			@continue outer loop
+	sub	r1, #1				@ decrement row number
+	b	rb_outerLoop			@ continue outer loop
 
 rb_done:
 	pop	{lr}
@@ -447,10 +454,11 @@ rb_done:
 
 /******************************************************
  * Purpose: To end the game
- * Pre:
- * Post
- * Param:
- * Return:
+ * Pre: A win or loss flag is set
+ * Post: The user must select any button and will be 
+ * brought back to the main menu.
+ * Param: None
+ * Return: 1 if the game is indeed over
  *
  ******************************************************/
 gameOver:

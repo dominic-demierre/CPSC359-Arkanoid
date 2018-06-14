@@ -1,13 +1,13 @@
 .section .data
-.align
 
+.align
 .global ballImage
 ballImage:
-.int 0			//x
-.int 364		//y
-.int 16			//diameter
-.int 4			//velocity
-.int 0			//direction (00 = up-left, 01 = up-right, 10 = down-left, 11 = down-right)
+.int 0			@ x
+.int 364		@ y
+.int 16			@ diameter
+.int 4			@ velocity
+.int 0			@ direction (00 = up-left, 01 = up-right, 10 = down-left, 11 = down-right)
 
 .ascii "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377&&&\377\013\013\013\377\025\025\025\377\025\025\025\377\025\025\025\377\025\025\025\377"
 .ascii "\010\010\010\377555\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377UUU\377"

@@ -1,7 +1,8 @@
 .sect	.data
+
+.align
 .global winGame
 winGame:
-
 .int	0		@ x relative to the center of the board (negative will need to mean left, right is positive)
 .int	0		@ y realtive to the center of the board 
 .int	256		@ width

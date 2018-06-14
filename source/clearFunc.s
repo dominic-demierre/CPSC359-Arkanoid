@@ -1,11 +1,14 @@
 .sect	.data
 
-/*******************************************
+/******************************************************
+ * Purpose: To clear the paddle image by replacing it 
+ * with the background image colour.
+ * Post: The background will be overwritten with the 
+ * new colour.
+ * Param: None
+ * Return: None
  *
- * maybe turn into one function with printPaddle
- *
- * r0 - address of object to clear
- *******************************************/
+ ******************************************************/
 .global	clearPaddle
 clearPaddle:
 	push	{r4-r10, lr}
@@ -41,12 +44,12 @@ clearPaddleOuterLoop:
 clearPaddlePrintLoop:
 	ldr	temp, [sAddr, #8]		@ get the width of the paddle
 	cmp	inCnt, temp			@ compare counter with width
-	bge	clearPaddleFinishRow			@ if the counter reaches the width, terminate
+	bge	clearPaddleFinishRow		@ if the counter reaches the width, terminate
 	
 	@ call pixel draw
 	add	r0, x, offset			@ x + offset
 	mov	r1, y				@ get the y value
-	ldr	r2, =0x3B0275				@ get value of ascii in colour
+	ldr	r2, =0x3B0275			@ get value of ascii in colour
 	bl	DrawPixel			@ draw the pixel in the (x,y) location	
 
 	add	inCnt, #1			@ increment the loop counter by 1
@@ -73,9 +76,15 @@ clearPaddlePrintDone:
 	pop	{r4-r10, lr}
 	bx	lr
 
-/****************************************
+/******************************************************
+ * Purpose: To clear the ball image by replacing it 
+ * with the background image colour.
+ * Post: The background will be overwritten with the 
+ * new colour.
+ * Param: None
+ * Return: None
  *
- ****************************************/
+ ******************************************************/
 .global	clearBall
 clearBall:
 	push	{r4-r10, lr}
@@ -145,68 +154,74 @@ cb_PrintDone:
 	pop	{r4-r10, lr}
 	bx	lr
 
-/**************************************************
+/*****************************************************
+ * Purpose: To clear the score on the screen.
+ * Post: The score will be overwritten
+ * Param: None
+ * Return: None
  *
- *
- *
- *
- **************************************************/
+ *****************************************************/
 
 .global	clearScore
 clearScore:
 	push	{lr}
 
-	mov	r0, #112			@x and y set manually
-	rsb	r0, r0, #0			@x is negative
+	mov	r0, #112			@ x and y set manually
+	rsb	r0, r0, #0			@ x is negative
 	mov	r1, #448
-	rsb	r1, r1, #0			@y is negative
+	rsb	r1, r1, #0			@ y is negative
 	bl	clearSprite
 
-	mov	r0, #80				@x and y set manually
-	rsb	r0, r0, #0			@x is negative
+	mov	r0, #80				@ x and y set manually
+	rsb	r0, r0, #0			@ x is negative
 	mov	r1, #448
-	rsb	r1, r1, #0			@y is negative
+	rsb	r1, r1, #0			@ y is negative
 	bl	clearSprite
 
-	mov	r0, #48				@x and y set manually
-	rsb	r0, r0, #0			@x is negative
+	mov	r0, #48				@ x and y set manually
+	rsb	r0, r0, #0			@ x is negative
 	mov	r1, #448
-	rsb	r1, r1, #0			@y is negative
+	rsb	r1, r1, #0			@ y is negative
 	bl	clearSprite
 	
-	mov	r0, #16				@x and y set manually
-	rsb	r0, r0, #0			@x is negative
+	mov	r0, #16				@ x and y set manually
+	rsb	r0, r0, #0			@ x is negative
 	mov	r1, #448
-	rsb	r1, r1, #0			@y is negative
+	rsb	r1, r1, #0			@ y is negative
 	bl	clearSprite
 
 	pop	{lr}
 	bx	lr
 
-/****************************************************
+/*****************************************************
+ * Purpose: To clear the lives on the screen
+ * Post: The lives will be overwritten on the screen
+ * Param: None
+ * Return: None
  *
- *
- *
- *
- ****************************************************/
+ *****************************************************/
 
 .global	clearLives
 clearLives:
 	push {lr}
 
-	mov	r0, #304
-	mov	r1, #448
-	rsb	r1, r1, #0
-	bl	clearSprite
+	mov	r0, #304			@ load x value for printing the sprite
+	mov	r1, #448			@ load y value for printing the sprite
+	rsb	r1, r1, #0			@ get the negative index for the x value
+	bl	clearSprite			@ clear the lives
 
 	pop	{lr}
 	bx	lr
 
-/**************************************************
- * clears a counter sprite
- * r0 = x
- * r1 = y
- * r2 = sprite address
+/****************************************************
+ * Purpose: To clear a sprite
+ * Pre: The game is in play
+ * Post: The sprite will be overwritten on the screen
+ * Param: r0 - x
+ * r1 - y
+ * r2 - sprite address
+ * Return: None
+ *
 **************************************************/
 .global clearSprite
 clearSprite:
@@ -224,7 +239,7 @@ clearSprite:
 	ldr	sAddr, =sprite_refs
 	ldr	sAddr, [sAddr]
 
-	mov	r3, sAddr				@ move the image address into r3 to get coordinates
+	mov	r3, sAddr			@ move the image address into r3 to get coordinates
 	bl	getSpriteCoord			@ get the coordinates of the image for printing
 	@ return is in r0 - x, r1 - y
 
@@ -274,15 +289,17 @@ cs_done:
 	pop	{r4-r10, lr}
 	bx	lr
 
-/******************************************
- * Purpose: to print an image
- * r0 - x
+/****************************************************
+ * Purpose: To clear an image of the back ground
+ * Pre: The user has selected to exit the game
+ * Post: The screen is turned black to signify it is 
+ * off.
+ * Param: r0 - x
  * r1 - y
  * r2 - the address to read in
- * find way to make this a general function
- * for printing any background
+ * Return: None
  *
- ******************************************/
+ ****************************************************/
 .global clearBacking
 clearBacking:
 	push	{r4-r10, lr}
@@ -302,7 +319,7 @@ clearBacking:
 	bl	getCoord			@ get the coordinates of the image for printing
 	@ return is in r0 - x, r1 - y	
 	
-	add	colour, sAddr, #8 		@ address of first ascii value
+	add	colour, sAddr, #8 		@ address of ascii value
 	mov	x, r0	@ store x		@ copy the x value into x
 	mov	y, r1	@ store y		@ copy the y value into y to save
 
@@ -310,14 +327,14 @@ clearBacking:
 clearBackOuterLoop:
 	ldr	temp, [sAddr, #4]		@ store the screen height in temp
 	cmp	outCnt, temp			@ compare counter with heigth
-	bge	clearBackDone				@ if the pixels for height are done, exit
+	bge	clearBackDone			@ if the pixels for height are done, exit
 
 	mov	inCnt, #0 			@ counter
 	mov	offset, #0			@ offset of x
 clearBackPrintLoop:
 	ldr	temp, [sAddr]			@ store the screen width in temp
 	cmp	inCnt, temp			@ compare counter with width
-	bge	clearBackFinishRow			@ move to next row if current one is done printing
+	bge	clearBackFinishRow		@ move to next row if current one is done printing
 	
 	@ call pixel draw
 	add	r0, x, offset			@ x + offset for function call
@@ -334,7 +351,7 @@ clearBackFinishRow:
 	ldr	temp, =frameBufferInfo		@ get the frame buffers address and store in temp
 	ldr	temp, [temp, #4]		@ get the width of the screen to add to x for next row
 	add	x, temp				@ add width of screen 
-	b	clearBackOuterLoop			@ continue back to print the next row of pixels
+	b	clearBackOuterLoop		@ continue back to print the next row of pixels
 	
 clearBackDone:	
 	.unreq	sAddr
@@ -349,5 +366,3 @@ clearBackDone:
 	bx	lr
 
 
-
-.end

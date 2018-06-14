@@ -4,15 +4,15 @@
 /*--------------------- FUNCTIONS ----------------------*/
 
 /********************************************************
- * Purpose: To set a pins function either input or 	*
- * output.						*
- * Pre: The GPIO address is valid.			*
- * Post: The pins function bits will be set according 	*
- * to the value passed in.				*
- * Param: r0 - the function value to set (output/input)	*
- * r1 - the pin number to be set			*
- * Return: None						*
- * Inspiration borrowed from tutorial notes		*
+ * Purpose: To set a pins function either input or 	
+ * output.						
+ * Pre: The GPIO address is valid.			
+ * Post: The pins function bits will be set according 	
+ * to the value passed in.				
+ * Param: r0 - the function value to set (output/input)	
+ * r1 - the pin number to be set			
+ * Return: None						
+ * Inspiration borrowed from tutorial notes		
  ********************************************************/
 .global init_GPIO
 init_GPIO:
@@ -59,16 +59,16 @@ setFuncLoop:
 	bx	lr				@ return to calling function
 
 /********************************************************
- * Purpose: To read in the state of the controller for	* 
- * one register cycle (16 clock cycles) and return the	*
- * corresponding bit pattern transfered from the 	*
- * controller.						*
- * Pre: The pins functions are set.			*
- * Post: The bit pattern for which buttons are pressed	*
- * is recorded in a register and returned.		*
- * Param: None						*
- * Return: a register containing all 16 bits passed from*
- * the controller to the core in the proper ordering.	*
+ * Purpose: To read in the state of the controller for	 
+ * one register cycle (16 clock cycles) and return the	
+ * corresponding bit pattern transfered from the 	
+ * controller.						
+ * Pre: The pins functions are set.			
+ * Post: The bit pattern for which buttons are pressed	
+ * is recorded in a register and returned.		
+ * Param: None						
+ * Return: a register containing all 16 bits passed from
+ * the controller to the core in the proper ordering.	
  ********************************************************/
 .global Read_SNES
 Read_SNES:
@@ -124,13 +124,13 @@ readEnd:
 	bx	lr				@ return to calling function
 
 /********************************************************
- * Purpose: To turn the latch line on or off.		*
- * Pre: The latches function is set to output.		*
- * Post: The latches voltage is changed accordingly.	*
- * Param: r0 - the value to write to the line		*
- * Return: None						*
- * inspiration for latch algorithm borrowed from lecture*
- * notes						*
+ * Purpose: To turn the latch line on or off.		
+ * Pre: The latches function is set to output.		
+ * Post: The latches voltage is changed accordingly.	
+ * Param: r0 - the value to write to the line		
+ * Return: None						
+ * inspiration for latch algorithm borrowed from lecture
+ * notes						
  ********************************************************/
 Write_Latch:
 	push	{lr}			
@@ -158,13 +158,13 @@ Write_Latch:
 
 
 /********************************************************
- * Purpose: To turn the clock line on or off.		*
- * Pre: The clocks function is set to output.		*
- * Post: The clocks voltage is changed accordingly.	*
- * Param: r0 - the value to write to the line		*
- * Return: None						*
- * inspiration for clock algorithm borrowed from lecture*
- * notes						*
+ * Purpose: To turn the clock line on or off.		
+ * Pre: The clocks function is set to output.		
+ * Post: The clocks voltage is changed accordingly.
+ * Param: r0 - the value to write to the line		
+ * Return: None						
+ * inspiration for clock algorithm borrowed from lecture
+ * notes						
  ********************************************************/
 Write_Clock:
 	push	{lr}		
@@ -191,13 +191,13 @@ Write_Clock:
 	bx	lr				@ return to calling function
 
 /********************************************************
- * Purpose: To read the input from the snes controller.	*
- * Pre: The data lines function is set to input.	*
- * Post: The value is recorded from the line.		*
- * Param: None						*
- * Return: The bit value read in from the data line.	*
- * inspiration for read algorithm borrowed from lecture *
- * notes						*
+ * Purpose: To read the input from the snes controller.	
+ * Pre: The data lines function is set to input.	
+ * Post: The value is recorded from the line.		
+ * Param: None						
+ * Return: The bit value read in from the data line.	
+ * inspiration for read algorithm borrowed from lecture 
+ * notes						
  ********************************************************/
 Read_Data:
 	push	{lr}		
@@ -228,5 +228,5 @@ Read_Data:
 	pop	{lr}				
 	bx	lr				@ return to calling function
 
-.end
+
 

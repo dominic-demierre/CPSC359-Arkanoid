@@ -1,11 +1,16 @@
 
 .sect	.text
 
-/******************************************
- *
- * r0 - x
+/**************************************************
+ * Purpose: To draw an individual pixel to standard
+ * output.
+ * Pre: The frame buffer has been initialized
+ * Post: The pixel on the screen is changed
+ * Param: r0 - x
  * r1 - y
- * r2 - colour
+ * r2 - colour of the pixel
+ * Return: None
+ * 
  ******************************************/
 .global DrawPixel
 DrawPixel:
@@ -31,15 +36,16 @@ DrawPixel:
 	pop	{r4, r5, lr}
 	bx	lr
 
-/******************************************
- * Purpose: to print an image
- * r0 - x
+/***************************************************
+ * Purpose: to print an image to standard output.
+ * Pre: The frame buffer has been initialized
+ * Post: The image is printed on the screen
+ * Param: r0 - x
  * r1 - y
  * r2 - the address to read in
- * find way to make this a general function
- * for printing any background
+ * Return: None
  *
- ******************************************/
+ ***************************************************/
 .global printBacking
 printBacking:
 	push	{r4-r10, lr}
@@ -106,39 +112,47 @@ done:
 	pop	{r4-r10, lr}
 	bx	lr
 
-/*****************************************
- * prints current lives counter
- * takes no arguments, returns nothing
-******************************************/
+/****************************************************
+ * Purpose: To print the number of lives the user has
+ * Pre: The frame buffer is initialized
+ * Post: The lives sprite is printed to the screen
+ * Param: None
+ * Return: None
+ *
+ ****************************************************/
 
 .global	printLives
 printLives:
 	push	{lr}
 
-	mov	r0, #192			@x and y set manually
+	mov	r0, #192			@ x and y set manually
 	mov	r1, #448
-	rsb	r1, r1, #0			@y is negative
-	ldr	r2, =sprite_lives
-	bl	drawSprite			@draw "lives:" sprite
+	rsb	r1, r1, #0			@ y is negative
+	ldr	r2, =sprite_lives		@ get the address of the lives image
+	bl	drawSprite			@ draw "lives:" sprite
 
-	ldr	r3, =lives
-	ldr	r3, [r3]			@get number of lives
+	ldr	r3, =lives			@ get the address containing the users total lives left
+	ldr	r3, [r3]			@ get number of lives
 
-	mov	r0, #304
-	mov	r1, #448
-	rsb	r1, r1, #0
-	ldr	r2, =sprite_refs
-	add	r2, r3, LSL #2			@find address of correct sprite
+	mov	r0, #304			@ get the y value manually
+	mov	r1, #448			@ get the x value manually
+	rsb	r1, r1, #0			@ get the negative index for y
+	ldr	r2, =sprite_refs		@ get the address of the sprite references
+	add	r2, r3, LSL #2			@ find address of correct sprite
 	ldr	r2, [r2]
-	bl	drawSprite			@print correct sprite
+	bl	drawSprite			@ print correct sprite
 
 	pop	{lr}
 	bx	lr
 
-/*******************************************
- * prints current score counter
- * takes no arguments, returns nothing
-*******************************************/
+/****************************************************
+ * Purpose: To print the current score counter
+ * Pre: The frame buffer is initialized
+ * Post: The score is printed to the screen
+ * Param: None
+ * Return: None
+ *
+ ****************************************************/
 
 .global	printScore
 printScore:
@@ -148,79 +162,79 @@ printScore:
 	offset	.req r5
 	score	.req r6
 
-	mov	r0, #224			@x and y set manually
-	rsb	r0, r0, #0			@x is negative
+	mov	r0, #224			@ x and y set manually
+	rsb	r0, r0, #0			@ x is negative
 	mov	r1, #448
-	rsb	r1, r1, #0			@y is negative
-	ldr	r2, =sprite_score
-	bl	drawSprite			@draw "score:" sprite
+	rsb	r1, r1, #0			@ y is negative
+	ldr	r2, =sprite_score		@ get the sprite image for score
+	bl	drawSprite			@ draw "score:" sprite
 
-	ldr	r3, =score
-	ldr	score, [r3]			@get score
+	ldr	r3, =score			@ get the users score
+	ldr	score, [r3]			@ get score
 
-	mov	offset, #0
+	mov	offset, #0			@ initialize the offset
 
 ps_thousands:
-	subs	temp, score, #1000		@test thousands
-	movpl	score, temp			@if result >= 0 update score reg
-	addpl	offset, #1			@increment offset
+	subs	temp, score, #1000		@ test thousands
+	movpl	score, temp			@ if result >= 0 update score reg
+	addpl	offset, #1			@ increment offset
 
-	bpl	ps_thousands			@continue testing thousands
+	bpl	ps_thousands			@ continue testing thousands
 
-	mov	r0, #112			@x and y set manually
-	rsb	r0, r0, #0			@x is negative
+	mov	r0, #112			@ x and y set manually
+	rsb	r0, r0, #0			@ x is negative
 	mov	r1, #448
-	rsb	r1, r1, #0			@y is negative
+	rsb	r1, r1, #0			@ y is negative
 	ldr	r2, =sprite_refs
-	add	r2, offset, LSL #2		@find address of correct sprite
+	add	r2, offset, LSL #2		@ find address of correct sprite
 	ldr	r2, [r2]
-	bl	drawSprite			@print correct sprite
+	bl	drawSprite			@ print correct sprite
 
 	mov offset, #0
 	
 ps_hundreds:
-	subs	temp, score, #100		@test hundreds
-	movpl	score, temp			@if result >= 0 update score reg
-	addpl	offset, #1			@increment offset
+	subs	temp, score, #100		@ test hundreds
+	movpl	score, temp			@ if result >= 0 update score reg
+	addpl	offset, #1			@ increment offset
 
-	bpl	ps_hundreds			@continue testing hundreds
+	bpl	ps_hundreds			@ continue testing hundreds
 
-	mov	r0, #80				@x and y set manually
-	rsb	r0, r0, #0			@x is negative
+	mov	r0, #80				@ x and y set manually
+	rsb	r0, r0, #0			@ x is negative
 	mov	r1, #448
-	rsb	r1, r1, #0			@y is negative
+	rsb	r1, r1, #0			@ y is negative
 	ldr	r2, =sprite_refs
-	add	r2, offset, LSL #2		@find address of correct sprite
+	add	r2, offset, LSL #2		@ find address of correct sprite
 	ldr	r2, [r2]
-	bl	drawSprite			@print correct sprite
+	bl	drawSprite			@ print correct sprite
 
 	mov offset, #0
 
 ps_tens:
-	subs	temp, score, #10		@test tens
-	movpl	score, temp			@if result >=0 update score reg
-	addpl	offset, #1			@increment offset
+	subs	temp, score, #10		@ test tens
+	movpl	score, temp			@ if result >=0 update score reg
+	addpl	offset, #1			@ increment offset
 
-	bpl	ps_tens				@continue testing tens
+	bpl	ps_tens				@ continue testing tens
 
-	mov	r0, #48				@x and y set manually
-	rsb	r0, r0, #0			@x is negative
+	mov	r0, #48				@ x and y set manually
+	rsb	r0, r0, #0			@ x is negative
 	mov	r1, #448
-	rsb	r1, r1, #0			@y is negative
+	rsb	r1, r1, #0			@ y is negative
 	ldr	r2, =sprite_refs
-	add	r2, offset, LSL #2		@find address of correct sprite
+	add	r2, offset, LSL #2		@ find address of correct sprite
 	ldr	r2, [r2]
-	bl	drawSprite			@print correct sprite
+	bl	drawSprite			@ print correct sprite
 
 ps_ones:
-	mov	r0, #16				@x and y set manually
-	rsb	r0, r0, #0			@x is negative
+	mov	r0, #16				@ x and y set manually
+	rsb	r0, r0, #0			@ x is negative
 	mov	r1, #448
-	rsb	r1, r1, #0			@y is negative
+	rsb	r1, r1, #0			@ y is negative
 	ldr	r2, =sprite_refs
-	add	r2, score, LSL #2		@only ones remain in score reg
+	add	r2, score, LSL #2		@ only ones remain in score reg
 	ldr	r2, [r2]
-	bl	drawSprite			@print correct sprite
+	bl	drawSprite			@ print correct sprite
 
 	.unreq	temp
 	.unreq	offset
@@ -228,12 +242,15 @@ ps_ones:
 	pop	{r4, r5, r6, lr}
 	bx	lr
 
-/*******************************************
+/***************************************************
+ * Purpose: To draw the paddle image to standard out
+ * Pre: The frame buffer is initialized
+ * Post: The paddle is drawn based on its current 
+ * position.
+ * Param: None
+ * Return: None
  *
- *
- * could possibly combine some of these print functions into 1
- * r0 paddle
- *******************************************/
+ ****************************************************/
 .global	drawPaddle
 drawPaddle:
 	push	{r4-r10, lr}
@@ -250,7 +267,7 @@ drawPaddle:
 	ldr	sAddr, =paddleImage		@ get the paddle address
 	mov	r3, sAddr			@ move the address into r3 for function call
 
-	bl	getPaddleCoord			@ get the coordinates of where to draw the ball relative to the board
+	bl	getPaddleCoord			@ get the coordinates of where to draw the paddle relative to the board
 	@ return is in r0 - x, r1 - y	
 
 	@ get paddle coordinate realtive to the screen
@@ -301,7 +318,13 @@ paddlePrintDone:
 	pop	{r4-r10, lr}
 	bx	lr
 
-/****************************************
+/************************************************
+ * Purpose: To draw the ball to standard output.
+ * Pre: The frame buffer is initialized
+ * Post: The ball is drawn on the screen based on
+ * its current location.
+ * Param: None
+ * Return: None
  *
  ****************************************/
 .global	drawBall
@@ -377,11 +400,15 @@ db_PrintDone:
 	bx	lr
 
 /**************************************************
- * displays a counter sprite
- * r0 = x
+ * Purpose: To draw a sprite to the screen
+ * Pre: The frame buffer is initialized
+ * Post: The sprite is printed to standard output
+ * Param: r0 = x
  * r1 = y
  * r2 = sprite address
-**************************************************/
+ * Return: None
+ *
+ **************************************************/
 .global drawSprite
 drawSprite:
 	push	{r4, r5, r6, r7, r8, r9, r10, lr}
@@ -451,14 +478,15 @@ ds_done:
 	pop	{r4, r5, r6, r7, r8, r9, r10, lr}
 	bx	lr
 
-/****************************************
- *
- *
- *
- * r0 is the x value for the brick to print
- * r1 is the y value for the brick to print
- * r2 is the integer value for the colour of the brick
- ****************************************/
+/*******************************************************
+ * Purpose: To print a brick tile to the screen
+ * Pre: The frame buffer is initialized
+ * Post: The brick is printed at the calculated
+ * coordinates.
+ * Param: r0 - is the x value for the brick to print
+ * r1 - is the y value for the brick to print
+ * r2 - is the integer value for the colour of the brick
+ *******************************************************/
 .global	drawBrick
 drawBrick:
 	push	{r4-r10, lr}
@@ -480,7 +508,7 @@ drawBrick:
 	cmp	value, #2			@ see if the brick should be yellow
 	ldreq	sAddr, =yellowBrick		@ get the address for the yellow brick
 	cmp	value, #3			@ see if the brick should be red
-	ldreq	sAddr, =redBrick		@ get the address for the yellow brick
+	ldreq	sAddr, =redBrick		@ get the address for the red brick
 	@ r0 - x, r1 - y
 	bl	getBrickCoord			@ get the coordinates to print the brick
 	mov	x, r0				@ copy the x value over
@@ -531,13 +559,16 @@ brickPrintDone:
 	pop	{r4-r10, lr}
 	bx	lr
 
-/****************************************
- *
- *
- *
- * r0 is the brick array
+/****************************************************
+ * Purpose: To print an array of bricks to the screen
+ * Pre: The array contains the correct number of 
+ * values for printing the bricks
+ * Post: The array of bricks will be printed with the
+ * correct colouring based on the values in the array
+ * Param: r0 - the brick array
+ * Return: None
  * 
- ****************************************/
+ ****************************************************/
 .global	printBricks
 printBricks:
 	push	{r4-r10, lr}
@@ -599,11 +630,13 @@ arrayPrintDone:
 	bx	lr
 
 
-/*******************************************
- *
- *
- * Print end win and lose
- * r0 - if 0 print loss, if 1 print win
+/***************************************************
+ * Purpose: To display the win or lose final message
+ * to the user on the screen.
+ * Pre: The frame buffer is initialized and the user
+ * has either lost or won.
+ * Param: r0 - if 0 print loss, if 1 print win
+ * Return: None
  *******************************************/
 .global	drawWinLoss
 drawWinLoss:
@@ -663,7 +696,7 @@ winLossFinishRow:
 	ldr	temp, =frameBufferInfo		@ get address of frame buffer to get the width value
 	ldr	temp, [temp, #4]		@ go to the byte containing the width
 	add	x, temp				@ add width of screen 
-	b	winLossOuterLoop
+	b	winLossOuterLoop		@ branch back to print the next row
 	
 winLossPrintDone:	
 	.unreq	sAddr
@@ -679,6 +712,4 @@ winLossPrintDone:
 
 
 
-
-.end
 

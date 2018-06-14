@@ -1,4 +1,6 @@
 .sect	.data
+
+.align
 .global loseGame
 loseGame:
 .int	0		@ x relative to the center of the board (negative will need to mean left, right is positive)

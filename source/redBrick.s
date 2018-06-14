@@ -1,4 +1,6 @@
 .sect	.data
+
+.align
 .global	redBrick
 redBrick:
 

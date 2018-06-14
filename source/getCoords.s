@@ -1,12 +1,15 @@
 .sect	.data
 
-/******************************************
- * Purpose: to get the x/y value of an image
- * based on the size of the screen
+/***************************************************
+ * Purpose: to get the x/y value of a background
+ * image.
+ * Pre: The image exists
+ * Post: The coordinates to print will be calculated
+ * based on the size of the screen.
+ * Param: r3 - the address of the image
+ * Return: r0 - x, r1 - y
  *
- * r3 - the address of the image
- * return: r0 - x, r1 - y
- ******************************************/
+ ***************************************************/
 .global getCoord
 getCoord:
 	push	{r4, r5, lr}
@@ -30,13 +33,15 @@ getCoord:
 	pop	{r4, r5, lr}
 	bx	lr
 
-/******************************************
- * Purpose: to get the x/y value of an image
- * based on the size of the screen
+/***********************************************
+ * Purpose: to get the x/y value of the paddle.
+ * Pre: The paddle image exists
+ * Post: The paddle image location to print will
+ * be calculated.
+ * Param: r3 - the address of the image
+ * Return: r0 - x, r1 - y
  *
- * r3 - the address of the image
- * return: r0 - x, r1 - y
- ******************************************/
+ ************************************************/
 .global getPaddleCoord
 getPaddleCoord:
 	push	{r4, r5, r6, r7, lr}
@@ -60,13 +65,15 @@ getPaddleCoord:
 	pop	{r4, r5, r6, r7, lr}
 	bx	lr
 
-/******************************************
- * Purpose: to get the x/y value of an image
- * based on the size of the screen
- *
- * r3 - the address of the image
+/***********************************************
+ * Purpose: To get the x/y value of the ball
+ * Pre: The ball image exists
+ * Post: The ball image location to print will
+ * be calculated.
+ * Param: r3 - the address of the image
  * return: r0 - x, r1 - y
- ******************************************/
+ *
+ ************************************************/
 .global	getBallCoord
 getBallCoord:
 	push	{r4, r5, r6, r7, lr}
@@ -90,15 +97,15 @@ getBallCoord:
 	pop	{r4, r5, r6, r7, lr}
 	bx	lr
 
-/************************************************
- * gets offset for a counter sprite
- * based on screen dimensions
- * r0 = x
- * r1 = y
- * r3 = sprite address
-************************************************/
-
-@ need to see if all of these get coord functions can be combined into one
+/*************************************************
+ * Purpose: To get the offset for a counter sprite
+ * Pre: The counter sprite exists
+ * Post: The sprite image location to print will
+ * be calculated.
+ * Param: r3 - sprite address
+ * Return: r0 - x, r1 - y
+ *
+ **************************************************/
 
 .global getSpriteCoord
 getSpriteCoord:
@@ -127,12 +134,14 @@ getSpriteCoord:
 	bx	lr
 
 /************************************************
- * gets offset for a counter sprite
- * based on screen dimensions
- * r0 = x
- * r1 = y
- * r3 = brick address
-************************************************/
+ * Purpose: To get the offset for a brick tile.
+ * Pre: The brick tile exists
+ * Post: The brick image location to print will
+ * be calculated.
+ * Param: r3 - brick address
+ * Return: r0 - x, r1 - y
+ *
+ *************************************************/
 .global getBrickCoord
 getBrickCoord:
 	push	{r4-r5, lr}

@@ -1,15 +1,14 @@
 
 .sect	.text
 
-/*****************************************************
- * Purpose:
- * Pre:
- * Post:
- * Param:
- * Return:
+/******************************************************
+ * Purpose: To update the paddle coordinates based on
+ * user input
+ * Pre: The user has provided some or no input.
+ * Post: The paddle coordinates are change in the label
+ * Param: r0 - buttons pressed
+ * Return: None
  *
- * r0 - buttons pressed (hex value)s
- * no return value
  *****************************************************/
 .global updatePaddle	
 updatePaddle:
@@ -78,12 +77,11 @@ endUpdate:
 /*****************************************************
  * Purpose: to update x and y coordinates of ball 
  * based on current direction
- * Pre:
- * Post:
- * Param:
- * Return:
+ * Pre: The game is in action
+ * Post: The ball coordinates are update in the label
+ * Param: None
+ * Return: None
  *
- * takes no arguments and returns nothing
  *****************************************************/
 .global	updateBall
 updateBall:
@@ -145,15 +143,13 @@ ub_done:
  * Purpose: to check if the ball's potential 
  * x and y values will cause collisions with 
  * other game objects
- * Pre:
- * Post:
- * Param:
- * Return:
- * arguments:
- * r0 = x, r1 = y
+ * Pre: The game is in action
+ * Post: The ball is determined to have collided with an 
+ * object or not
+ * Param: r0 - x
+ * r1 - y
+ * Return: r0 = x, r1 = y, r2 = updated direction
  *
- * returns:
- * r0 = x, r1 = y, r2 = updated direction
  **********************************************************/
 testBallCollisions:
 	push	{r4-r10, lr}
@@ -345,16 +341,13 @@ tbc_done:
 	bx	lr
 
 /******************************************************
- * Purpose: to check if there are any
- * bricks left on screen
- * Pre:
- * Post:
- * Param:
- * 
- * takes no arguments
+ * Purpose: to check if there are any bricks left on 
+ * the screen
+ * Pre: The game is in action
+ * Post: A value is returned to indicate yes or no
+ * Param: None
+ * Return: r0 = flag (0: none left, 1: some left)
  *
- * returns:
- * r0 = flag (0: none left, 1: some left)
  ******************************************************/
 checkRemainingBricks:
 	push	{lr}
@@ -383,4 +376,3 @@ cbr_done:
 
 /***************************** END OF FILE ***************************/
 
-.end
