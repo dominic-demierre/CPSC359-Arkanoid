@@ -3,7 +3,7 @@
  * Dominic Demierre, Maha Asim, 
  * Jessica Pelley, Glenn Skelton
  *
- * Due June 12, 2018
+ * Due June 14, 2018
  *
  *****************************************************/
 
@@ -12,69 +12,74 @@
 .align
 .globl	frameBufferInfo
 frameBufferInfo:
-	.int	0		@ frame buffer pointer
-	.int	0		@ screen width
-	.int	0		@ screen hight
+	.int	0				@ frame buffer pointer
+	.int	0				@ screen width
+	.int	0				@ screen hight
 
 .global	GpioPtr
 GpioPtr:
-	.int	0		@ pointer to the address of the GPIO base register
+	.int	0				@ pointer to the address of the GPIO base register
 
 .global winFlag
 winFlag:
-	.int	0		@ flag for checking if the game has been won
+	.int	0				@ flag for checking if the game has been won
 
 .global lossFlag
 lossFlag:
-	.int	0		@ flag for checking if the game has been lost
+	.int	0				@ flag for checking if the game has been lost
 
 .global	oobFlag
 oobFlag:
-	.int	0		@flag for checking if ball is out of bounds
+	.int	0				@flag for checking if ball is out of bounds
 
 .global score
-score:	.int 0			@ total score for the game play
+score:	.int 0					@ total score for the game play
 
 .global lives
-lives:	.int 0			@ total number of lives for the game
+lives:	.int 0					@ total number of lives for the game
 
 .global bricksList
-bricksList:			@ brick difficulty and existance array for printing (or not printing) a brick 
+bricksList:					@ brick difficulty and existance array for printing (or not printing) a brick 
 	.int	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
 .global brickStart
 brickStart:
-	.int	33
-	.int	224
+	.int	33				@ x location from the left side of the board
+	.int	224				@ y location from the right side of the board
 
 .global purple
 purple:
-	.int	0x3B0275
+	.int	0x3B0275			@ colour value for the background
 
 .global clear
 clear:
-	.int	768		@ width of the screen to print
-	.int	896		@ height of the screen to print
-	.int	0		@ load the background to be black 
+	.int	768				@ width of the screen to print
+	.int	896				@ height of the screen to print
+	.int	0				@ load the background to be black 
 
 /*----------------------- CODE ----------------------*/
 .sect	.text
 .global	main
 
+/*********************************************************
+ * Purpose: To run the main game loop of the game Arkanoid
+ *
+ *
+ *
+ *********************************************************/
+
 main:
 	bl	setup				@ set up all buffers for the game proccesses
 
-	mov	r1, #0
-	ldr	r0, =winFlag
-	str	r1, [r0]			@reset win flag
-	ldr	r0, =lossFlag
-	str	r1, [r0]			@reset loss flag
+	mov	r1, #0				@ load test value for win flag 
+	ldr	r0, =winFlag			@ load the address of the win flag to store
+	str	r1, [r0]			@ reset win flag
+	ldr	r0, =lossFlag			@ load the address for the loss flag
+	str	r1, [r0]			@ reset loss flag
 
-	mov	r1, #3
-	ldr	r0, =lives
-	str	r1, [r0]			@reset number of lives
-
-	@ print the starting screen		
+	mov	r1, #3				@ load the value in for the lives to start
+	ldr	r0, =lives			@ load the address for lives
+	str	r1, [r0]			@ reset number of lives
 
 	@ get user input to determine mode
 	bl 	mainMenu			@ get user input for starting or quiting the game
@@ -88,22 +93,22 @@ startGame:
 	ldr	r5, =gameBackground
 	mov	r2, r5				@ prepare the background image for function call
 	bl	printBacking			@ print the background image
-	bl	printLives
-	bl	printScore
+	bl	printLives			@ print the total number of lives to start
+	bl	printScore			@ print the total score to start (should be 0000)
 	bl	drawPaddle			@ draw the paddle on the scren
 	bl	drawBall			@ draw the ball on the screen
 	bl	printBricks			@ print the brick array
 	
 wait:
 	bl	Read_SNES			@ get the input from the SNES paddle
-	ldr	r1, =0xFFFE	
+	ldr	r1, =0xFFFE			@ load the test value for testing the button register for B being pressed
 	teq	r0, r1				@ test to see if the B button has been pressed to start
 	beq	gameLoop			@ if the B button was pressed, start the game
 	bne	wait				@ while the input is not B, keep waiting
 
 gameLoop:
 	bl	Read_SNES			@ get the input from the SNES paddle	
-	mov	r4, r0	
+	mov	r4, r0				@ save the button register values in r4 for later use
 
 	@ start button
 	mvn	r1, r0				@ get the compliment of r0
@@ -137,7 +142,7 @@ sel_cont:
 	bl	updateBall			@ update the ball coordinates based on its interactions
 
 	@ check the state of the game for wins and losses
-	ldr	r1, =winFlag			@ load address of loss flag
+	ldr	r1, =winFlag			@ load address of win flag
 	ldr	r1, [r1]			@ get the win flag for checking
 	cmp	r1, #1				@ see if the win flag was set
 	bleq	gameOver			@ if so go to game over
@@ -148,8 +153,8 @@ sel_cont:
 	bleq	gameOver			@ if so go to game over
 
 	cmp	r0, #1				@ check to make sure gameOver was valid
-	bne	go_cont
-	bl	resetGame
+	bne	go_cont				@ if not valid, continue on through the regular game loop
+	bl	resetGame			@ if game is over, reset the game parameters (paddle, ball, bricks)
 	b	main				@ if so go back to the main screen
 
 go_cont:
@@ -167,11 +172,11 @@ oob_cont:
 	bl	drawBall			@ draw the ball
 
 	@ delay frames
-	mov	r0, #5000			@ delay for 6 miliseconds		
-	lsl 	r0, #1				@ multiply by two to get it to 12 milisecond delay
+	mov	r0, #5000			@ delay for 5 miliseconds		
+	lsl 	r0, #1				@ multiply by two to get it to 10 milisecond delay
 	bl	delayMicroseconds		@ frame rate delay
 		
-	b	gameLoop
+	b	gameLoop			@ continue back through the game loop for regular game play
 
 end:
 	ldr	r2, =clear			@ call the label with the clear screen parameters
@@ -181,15 +186,18 @@ end:
 /*---------------------- FUNCTIONS --------------------*/
 
 /******************************************************
- * Setup GPIO register, pins and framebuffer
- *
+ * Purpose: Setup GPIO register, pins and framebuffer
+ * Pre:
+ * Post:
+ * Param:
+ * Return:
  *
  ******************************************************/
 setup:
 	push	{lr}
 
-	ldr	r0, =frameBufferInfo
-	bl	initFbInfo
+	ldr	r0, =frameBufferInfo		@ load the frame buffer address for initializing
+	bl	initFbInfo			@ initialize the frame buffer
 
 	ldr	r0, =GpioPtr			@ get address of pointer to initialize
 	bl	initGpioPtr			@ set up base address
@@ -210,26 +218,28 @@ setup:
 	bx	lr
 
 /******************************************************
- * Main menu loop
- * call mainMenu function to wait for user input to start or exit
- *
+ * Purpose: Main menu loop ,call mainMenu function to wait for user input to start or exit
+ * Pre:
+ * Post:
+ * Param:
+ * Return:
  * check to see if up or down is pressed or A to go onto game loop
  * if nothing keep polling for input
  * return value will be 1 for going to main menu or 0 to quit
  ******************************************************/
 mainMenu:	
-	push	{r4, r5, r6, lr}
+	push	{r4-r6, lr}
 	
 	mov	r5, #0				@ defualt 0 for start screen and 1 for quit selection
-	mov	r6, #0				@assume player not already holding a button
+	mov	r6, #0				@ assume player not already holding a button
 
 	@ start with the start button selected
 	ldr	r2, =splashStart		@ load the splash start screen
 	bl	printBacking			@ print the screen image
 
-	mov	r1, #0xFFFF			@mask to check if player is already holding a button
-	teq	r0, r1				@test to see if player is already holding a button
-	movne	r6, #1				@set flag to indicate button still being held
+	mov	r1, #0xFFFF			@ mask to check if player is already holding a button
+	teq	r0, r1				@ test to see if player is already holding a button
+	movne	r6, #1				@ set flag to indicate button still being held
 
 readInLoop:
 	bl	Read_SNES			@ get the input from the SNES paddle
@@ -238,8 +248,8 @@ readInLoop:
 	moveq	r6, #0				@ if no button being pushed reset flag
 	beq	readInLoop			@ then go back and wait until it one is pushed
 
-	teq	r6, #1				@check if player is already holding a button
-	beq	readInLoop			@if player is already holding a button ignore input
+	teq	r6, #1				@ check if player is already holding a button
+	beq	readInLoop			@ if player is already holding a button ignore input
 	
 btnPressed:
 	@ r0 contains the buttons pressed
@@ -306,12 +316,15 @@ readOutLoop:
 	b	readInLoop			@ loop back to get input
 	
 endMainLoop:
-	pop	{r4, r5, r6, lr}
+	pop	{r4-r6, lr}
 	bx	lr
 
 /******************************************************
  * Purpose: To reset the ball and paddle positions
- *
+ * Pre
+ * Post:
+ * Param:
+ * Return:
  *
  ******************************************************/
 resetGame:
@@ -337,22 +350,29 @@ resetGame:
 	mov	r1, #0				@ move 0 into r1 for reseting the direction
 	str	r1, [r0, #16]			@ save 0 into the direction
 
-	ldr	r0, =score			@load score address
-	mov	r1, #0				@reset score to 0
-	str	r1, [r0]			@store back into score
+	ldr	r0, =score			@ load score address
+	mov	r1, #0				@ reset score to 0
+	str	r1, [r0]			@ store back into score
 
-	ldr	r0, =oobFlag			@load out of bounds flag address
-	mov	r1, #0				@reset flag to 0
-	str	r1, [r0]			@store back into flag
+	ldr	r0, =lives			@ load lives address
+	mov	r1, #3				@ reset the lives back to 3
+	str	r1, [r0]			@ store back into lives
 
-	bl	resetBricks			@reset all bricks
+	ldr	r0, =oobFlag			@ load out of bounds flag address
+	mov	r1, #0				@ reset flag to 0
+	str	r1, [r0]			@ store back into flag
+
+	bl	resetBricks			@ reset all bricks
 	
 	pop	{lr}
 	bx	lr
 
 /******************************************************
  * Purpose: To reset the ball and paddle positions
- *
+ * Pre:
+ * Post:
+ * Param:
+ * Return:
  *
  ******************************************************/
 refreshGame:
@@ -389,7 +409,10 @@ refreshGame:
 
 /******************************************************
  * Purpose: To reset every individual brick
- *
+ * Pre:
+ * Post:
+ * Param:
+ * Return:
  *
  ******************************************************/
 resetBricks:
@@ -424,7 +447,10 @@ rb_done:
 
 /******************************************************
  * Purpose: To end the game
- *
+ * Pre:
+ * Post
+ * Param:
+ * Return:
  *
  ******************************************************/
 gameOver:
@@ -452,8 +478,8 @@ endGameOverInput:
 	mov	r0, #1				@ load 1 in r0 to signify the game is indeed over
 
 	pop	{lr}
-	bx	lr				@ return to calling function
+	bx	lr				
 
-/************************************************************/
+/************************* END OF FILE *****************************/
 
 .end
